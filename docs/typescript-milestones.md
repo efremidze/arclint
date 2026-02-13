@@ -65,6 +65,7 @@ Goal: Generate a usable config that users trust and can edit.
 Deliverables:
 - Structured project summarizer (tree, import sample, config files, naming patterns).
 - Provider abstraction for OpenAI/Anthropic.
+- Authentication via API keys only (stored in VS Code SecretStorage).
 - Onboarding panel with confidence score and editable proposed layers/rules.
 - "Confirm before write" flow for `.arclint.yml`.
 
@@ -72,6 +73,7 @@ Acceptance criteria:
 - Generated config is accepted with minimal edits in at least 70% of pilot repos.
 - Onboarding flow completes in under 15 seconds median.
 - API keys stored via VS Code SecretStorage only.
+- No provider SSO/OAuth flow in v0.1 (deferred until official provider documentation is sufficient).
 
 ## Milestone 5: Hardening, CI, and Release
 Goal: Make v0.1 safe to publish.
