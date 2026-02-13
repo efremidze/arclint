@@ -243,6 +243,8 @@ npm test
 
 ## Roadmap
 
+TypeScript-first execution plan: see [`docs/typescript-milestones.md`](docs/typescript-milestones.md).
+
 ### v0.1 (Current - TypeScript)
 - ✅ Core import graph analyzer
 - ✅ Architecture pattern inference
