@@ -80,6 +80,7 @@ export interface Module {
  * Architectural violation found during analysis
  */
 export interface Violation {
+  ruleId: string;
   type: ViolationType;
   severity: ViolationSeverity;
   message: string;
@@ -95,6 +96,11 @@ export interface LayerDefinition {
   name: LayerType;
   pattern: string;
   canDependOn: LayerType[];
+  /**
+   * Optional explicit precedence when multiple layer patterns match a file.
+   * Higher value wins. If omitted, declaration order is used.
+   */
+  precedence?: number;
   description?: string;
 }
 

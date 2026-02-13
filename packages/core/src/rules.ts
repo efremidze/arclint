@@ -16,6 +16,11 @@ import {
 export class RuleEngine {
   private config: ArchitectureConfig;
   private layerMap: Map<string, LayerDefinition> = new Map();
+  static readonly RULE_IDS = {
+    DEPENDENCY_DIRECTION: 'dependency-direction',
+    CIRCULAR_DEPENDENCY: 'circular-dependency',
+    BUSINESS_LOGIC_PLACEMENT: 'business-logic-placement'
+  } as const;
 
   constructor(config: ArchitectureConfig) {
     this.config = config;
@@ -62,21 +67,59 @@ export class RuleEngine {
    */
   private assignLayersToModules(modules: Module[]): Module[] {
     return modules.map(module => {
-      for (const layerDef of this.config.layers) {
+      let selectedLayer: LayerDefinition | null = null;
+      let selectedPatternSpecificity = -1;
+      let selectedOrder = Number.MAX_SAFE_INTEGER;
+
+      for (const [order, layerDef] of this.config.layers.entries()) {
         // Normalize paths
         const modulePath = module.path.replace(/\\/g, '/');
         const pattern = layerDef.pattern.replace(/\\/g, '/');
-        
-        // Simple glob matching
-        // **/folder/** matches any path containing /folder/
-        // **/ at start matches anything before
-        // /** at end matches anything after
+
         if (this.matchGlob(modulePath, pattern)) {
-          return { ...module, layer: layerDef.name };
+          if (!selectedLayer) {
+            selectedLayer = layerDef;
+            selectedPatternSpecificity = this.getPatternSpecificity(pattern);
+            selectedOrder = order;
+            continue;
+          }
+
+          const currentPrecedence = layerDef.precedence ?? -1;
+          const selectedPrecedence = selectedLayer.precedence ?? -1;
+
+          if (currentPrecedence > selectedPrecedence) {
+            selectedLayer = layerDef;
+            selectedPatternSpecificity = this.getPatternSpecificity(pattern);
+            selectedOrder = order;
+            continue;
+          }
+
+          if (currentPrecedence === selectedPrecedence) {
+            const currentSpecificity = this.getPatternSpecificity(pattern);
+
+            if (currentSpecificity > selectedPatternSpecificity) {
+              selectedLayer = layerDef;
+              selectedPatternSpecificity = currentSpecificity;
+              selectedOrder = order;
+              continue;
+            }
+
+            // Stable tie-breaker: first declared layer wins.
+            if (currentSpecificity === selectedPatternSpecificity && order < selectedOrder) {
+              selectedLayer = layerDef;
+              selectedPatternSpecificity = currentSpecificity;
+              selectedOrder = order;
+            }
+          }
         }
       }
-      return module;
+
+      return selectedLayer ? { ...module, layer: selectedLayer.name } : module;
     });
+  }
+
+  private getPatternSpecificity(pattern: string): number {
+    return pattern.replace(/\*/g, '').replace(/\?/g, '').length;
   }
 
   /**
@@ -140,6 +183,7 @@ export class RuleEngine {
         // Check if this dependency is allowed
         if (!layerDef.canDependOn.includes(targetModule.layer)) {
           violations.push({
+            ruleId: RuleEngine.RULE_IDS.DEPENDENCY_DIRECTION,
             type: ViolationType.WRONG_DEPENDENCY_DIRECTION,
             severity: ViolationSeverity.ERROR,
             message: `Layer '${module.layer}' cannot depend on layer '${targetModule.layer}'`,
@@ -205,6 +249,7 @@ export class RuleEngine {
         const module = modules.find(m => m.path === cycle[0]);
         if (module) {
           violations.push({
+            ruleId: RuleEngine.RULE_IDS.CIRCULAR_DEPENDENCY,
             type: ViolationType.CIRCULAR_DEPENDENCY,
             severity: ViolationSeverity.WARNING,
             message: `Circular dependency detected: ${cycle.join(' -> ')}`,
@@ -253,6 +298,7 @@ export class RuleEngine {
 
           if (hasBusinessLogic && exportName !== 'default') {
             violations.push({
+              ruleId: RuleEngine.RULE_IDS.BUSINESS_LOGIC_PLACEMENT,
               type: ViolationType.MISPLACED_BUSINESS_LOGIC,
               severity: ViolationSeverity.WARNING,
               message: `Possible business logic detected in ${module.layer} layer: '${exportName}'`,

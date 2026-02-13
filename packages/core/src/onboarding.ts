@@ -191,6 +191,12 @@ export class OnboardingService {
     const language = await this.detectLanguage(rootDir);
     console.log(`✓ Detected language: ${language}`);
 
+    if (language !== Language.TYPESCRIPT) {
+      throw new Error(
+        `ArcLint v0.1 onboarding supports TypeScript only. Detected: ${language}`
+      );
+    }
+
     // Generate config
     const config = ConfigParser.createDefaultConfig(pattern, language, './src');
     console.log('✓ Generated configuration');

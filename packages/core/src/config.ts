@@ -55,6 +55,9 @@ export class ConfigParser {
     if (!Object.values(Language).includes(config.language)) {
       throw new Error(`Invalid language: ${config.language}`);
     }
+    if (config.language === Language.SWIFT) {
+      throw new Error('Swift is out of scope for v0.1. Use TypeScript for now.');
+    }
 
     if (!config.rootDir) {
       throw new Error('Config must have a rootDir field');
@@ -74,6 +77,9 @@ export class ConfigParser {
       }
       if (!layer.canDependOn || !Array.isArray(layer.canDependOn)) {
         throw new Error(`Layer ${layer.name} must have canDependOn array`);
+      }
+      if (layer.precedence !== undefined && !Number.isFinite(layer.precedence)) {
+        throw new Error(`Layer ${layer.name} has invalid precedence: ${layer.precedence}`);
       }
     }
   }
@@ -109,6 +115,10 @@ export class ConfigParser {
     language: Language,
     rootDir: string
   ): ArchitectureConfig {
+    if (language !== Language.TYPESCRIPT) {
+      throw new Error(`v0.1 currently supports TypeScript only. Received: ${language}`);
+    }
+
     const config: ArchitectureConfig = {
       version: '0.1.0',
       pattern,
