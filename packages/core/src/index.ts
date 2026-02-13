@@ -1,5 +1,6 @@
 export * from './types';
 export * from './analyzer';
+export * from './languages';
 export * from './config';
 export * from './rules';
 export * from './onboarding';
@@ -8,17 +9,20 @@ import { ImportGraphAnalyzer } from './analyzer';
 import { ConfigParser } from './config';
 import { RuleEngine } from './rules';
 import { OnboardingService } from './onboarding';
-import { AnalysisResult } from './types';
+import { AnalysisResult, Language, Module } from './types';
+import { SwiftImportGraphAnalyzer } from './languages/swift';
+
+interface LanguageAnalyzer {
+  analyzeDirectory(dirPath: string, rootDir: string, patterns?: string[]): Promise<Module[]>;
+}
 
 /**
  * Main ArcLint class - orchestrates the linting process
  */
 export class ArcLint {
-  private analyzer: ImportGraphAnalyzer;
   private onboarding: OnboardingService;
 
   constructor() {
-    this.analyzer = new ImportGraphAnalyzer();
     this.onboarding = new OnboardingService();
   }
 
@@ -38,7 +42,8 @@ export class ArcLint {
 
     // Analyze the codebase
     console.log('📊 Analyzing import graph...');
-    const modules = await this.analyzer.analyzeDirectory(rootDir, rootDir);
+    const analyzer = this.createAnalyzer(config.language);
+    const modules = await analyzer.analyzeDirectory(rootDir, rootDir);
     console.log(`✓ Analyzed ${modules.length} modules`);
 
     // Apply rules
@@ -65,5 +70,16 @@ export class ArcLint {
     const rootDir = require('path').resolve(configDir, config.rootDir);
 
     return this.lint(configPath, rootDir);
+  }
+
+  private createAnalyzer(language: Language): LanguageAnalyzer {
+    switch (language) {
+      case Language.SWIFT:
+        return new SwiftImportGraphAnalyzer();
+      case Language.TYPESCRIPT:
+      case Language.JAVASCRIPT:
+      default:
+        return new ImportGraphAnalyzer();
+    }
   }
 }

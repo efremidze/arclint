@@ -222,11 +222,5 @@ function getWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
 
 function formatArcLintError(error: unknown, prefix: string): string {
   const raw = error instanceof Error ? error.message : String(error);
-  const normalized = raw.toLowerCase();
-
-  if (normalized.includes('supports typescript only') || normalized.includes('use typescript')) {
-    return `${prefix}: ArcLint v0.1 supports TypeScript projects only.`;
-  }
-
   return `${prefix}: ${raw}`;
 }

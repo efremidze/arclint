@@ -153,10 +153,16 @@ export class OnboardingService {
   async detectLanguage(rootDir: string): Promise<Language> {
     const tsConfigPath = path.join(rootDir, 'tsconfig.json');
     const packageJsonPath = path.join(rootDir, 'package.json');
+    const packageSwiftPath = path.join(rootDir, 'Package.swift');
 
     // Check for TypeScript
     if (fs.existsSync(tsConfigPath)) {
       return Language.TYPESCRIPT;
+    }
+
+    // Check for Swift package
+    if (fs.existsSync(packageSwiftPath)) {
+      return Language.SWIFT;
     }
 
     // Check package.json for TypeScript dependency
@@ -169,9 +175,8 @@ export class OnboardingService {
       }
     }
 
-    // Check for Swift files
-    const files = await fs.promises.readdir(rootDir);
-    if (files.some(f => f.endsWith('.swift'))) {
+    // Check for Swift files (recursive, bounded depth)
+    if (await this.hasSwiftFiles(rootDir, 3)) {
       return Language.SWIFT;
     }
 
@@ -191,14 +196,9 @@ export class OnboardingService {
     const language = await this.detectLanguage(rootDir);
     console.log(`✓ Detected language: ${language}`);
 
-    if (language !== Language.TYPESCRIPT) {
-      throw new Error(
-        `ArcLint v0.1 onboarding supports TypeScript only. Detected: ${language}`
-      );
-    }
-
     // Generate config
-    const config = ConfigParser.createDefaultConfig(pattern, language, './src');
+    const defaultRootDir = this.defaultRootDirForLanguage(rootDir, language);
+    const config = ConfigParser.createDefaultConfig(pattern, language, defaultRootDir);
     console.log('✓ Generated configuration');
 
     // Save config if output path provided
@@ -208,6 +208,50 @@ export class OnboardingService {
     }
 
     return config;
+  }
+
+  private defaultRootDirForLanguage(rootDir: string, language: Language): string {
+    if (language === Language.SWIFT) {
+      if (fs.existsSync(path.join(rootDir, 'Sources'))) {
+        return './Sources';
+      }
+      return './';
+    }
+
+    if (fs.existsSync(path.join(rootDir, 'src'))) {
+      return './src';
+    }
+    return './';
+  }
+
+  private async hasSwiftFiles(dir: string, maxDepth: number): Promise<boolean> {
+    async function walk(current: string, depth: number): Promise<boolean> {
+      if (depth > maxDepth) return false;
+
+      const entries = await fs.promises.readdir(current, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.name === '.build' || entry.name === '.git' || entry.name === 'node_modules') {
+          continue;
+        }
+
+        const fullPath = path.join(current, entry.name);
+        if (entry.isFile() && entry.name.endsWith('.swift')) {
+          return true;
+        }
+        if (entry.isDirectory()) {
+          const found = await walk(fullPath, depth + 1);
+          if (found) return true;
+        }
+      }
+
+      return false;
+    }
+
+    try {
+      return await walk(dir, 0);
+    } catch {
+      return false;
+    }
   }
 
   /**
