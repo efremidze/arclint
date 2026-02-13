@@ -1,0 +1,77 @@
+{
+  "name": "arclint",
+  "displayName": "ArcLint - Architectural Linter",
+  "description": "AI-powered architectural linter for TypeScript and Swift projects",
+  "version": "0.1.0",
+  "publisher": "efremidze",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "architecture",
+    "linter",
+    "clean-architecture",
+    "mvc",
+    "mvvm"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "arclint.onboard",
+        "title": "ArcLint: Run Onboarding"
+      },
+      {
+        "command": "arclint.lint",
+        "title": "ArcLint: Lint Project"
+      },
+      {
+        "command": "arclint.showConfig",
+        "title": "ArcLint: Show Configuration"
+      }
+    ],
+    "configuration": {
+      "title": "ArcLint",
+      "properties": {
+        "arclint.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable ArcLint"
+        },
+        "arclint.lintOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Lint files on save"
+        },
+        "arclint.configPath": {
+          "type": "string",
+          "default": ".arclint.yml",
+          "description": "Path to .arclint.yml configuration file"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "clean": "rm -rf dist",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "@arclint/core": "file:../core"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.3"
+  }
+}
