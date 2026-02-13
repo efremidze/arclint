@@ -9,7 +9,13 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
-    "clean": "npm run clean --workspaces && rm -rf node_modules"
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "dev:build": "npm run build --workspace @arclint/core && npm run build --workspace arclint",
+    "dev:watch:core": "npm run watch --workspace @arclint/core",
+    "dev:watch:extension": "npm run watch --workspace arclint",
+    "dev:test-core": "npm run test --workspace @arclint/core",
+    "dev:test-extension": "npm run build --workspace arclint",
+    "dev:run-extension": "code --extensionDevelopmentPath ./packages/vscode-extension"
   },
   "repository": {
     "type": "git",
