@@ -2,6 +2,33 @@
 
 Get started with ArcLint in 5 minutes!
 
+## Developer Setup (VS Code, One-Click)
+
+Use this flow when developing ArcLint itself.
+
+1. Install dependencies:
+```bash
+npm install
+```
+2. Open the repository in VS Code:
+```bash
+code .
+```
+3. Start extension development host:
+- Press `F5`
+- Choose `ArcLint: Run Extension`
+
+This uses:
+- `/Users/home/Documents/GitHub/arclint/.vscode/tasks.json` for build/watch tasks
+- `/Users/home/Documents/GitHub/arclint/.vscode/launch.json` for Extension Host launch
+
+Useful commands:
+```bash
+npm run dev:build
+npm run dev:test-core
+npm run dev:test-extension
+```
+
 ## Installation
 
 ### Option 1: VS Code Extension (Recommended)
