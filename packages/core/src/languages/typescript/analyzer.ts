@@ -94,6 +94,15 @@ export class ImportGraphAnalyzer {
 
     const fromDir = path.dirname(fromFile);
     const resolved = path.resolve(fromDir, importPath);
+
+    // If the import already includes an extension and exists, use it directly.
+    if (fs.existsSync(resolved) && fs.statSync(resolved).isFile()) {
+      return {
+        path: path.relative(rootDir, resolved),
+        isExternal: false,
+        isUnresolved: false
+      };
+    }
     
     // Try common extensions
     for (const ext of ImportGraphAnalyzer.SOURCE_EXTENSIONS) {
