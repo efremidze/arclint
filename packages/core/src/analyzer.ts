@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { parse } from '@typescript-eslint/typescript-estree';
+import * as parser from '@typescript-eslint/typescript-estree';
 import { Dependency, Module } from './types';
 
 /**
@@ -20,7 +20,7 @@ export class ImportGraphAnalyzer {
     const exports: string[] = [];
 
     try {
-      const ast = parse(content, {
+      const ast = parser.parse(content, {
         loc: true,
         range: true,
         comment: true,

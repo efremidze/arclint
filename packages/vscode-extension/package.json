@@ -63,6 +63,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "clean": "rm -rf dist",
+    "build": "tsc -p ./",
     "package": "vsce package"
   },
   "dependencies": {

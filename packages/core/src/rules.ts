@@ -63,19 +63,58 @@ export class RuleEngine {
   private assignLayersToModules(modules: Module[]): Module[] {
     return modules.map(module => {
       for (const layerDef of this.config.layers) {
-        // Simple pattern matching - convert glob pattern to regex
-        const pattern = layerDef.pattern
-          .replace(/\*\*/g, '.*')
-          .replace(/\*/g, '[^/]*')
-          .replace(/\?/g, '.');
-        const regex = new RegExp(pattern);
+        // Normalize paths
+        const modulePath = module.path.replace(/\\/g, '/');
+        const pattern = layerDef.pattern.replace(/\\/g, '/');
         
-        if (regex.test(module.path)) {
+        // Simple glob matching
+        // **/folder/** matches any path containing /folder/
+        // **/ at start matches anything before
+        // /** at end matches anything after
+        if (this.matchGlob(modulePath, pattern)) {
           return { ...module, layer: layerDef.name };
         }
       }
       return module;
     });
+  }
+
+  /**
+   * Simple glob pattern matching
+   */
+  private matchGlob(path: string, pattern: string): boolean {
+    // Simplified glob matching for common patterns
+    
+    // Pattern: **/folder/** means path contains /folder/ or starts with folder/
+    const match1 = pattern.match(/^\*\*\/([^/]+)\/\*\*$/);
+    if (match1) {
+      const folder = match1[1];
+      return path.includes(`/${folder}/`) || path.startsWith(`${folder}/`);
+    }
+    
+    // Pattern: folder/** means path starts with folder/
+    const match2 = pattern.match(/^([^*]+)\/\*\*$/);
+    if (match2) {
+      const prefix = match2[1];
+      return path.startsWith(prefix + '/');
+    }
+    
+    // Pattern: **/folder means path ends with /folder or is exactly folder
+    const match3 = pattern.match(/^\*\*\/([^/]+)$/);
+    if (match3) {
+      const suffix = match3[1];
+      return path.endsWith(`/${suffix}`) || path === suffix;
+    }
+    
+    // Fallback: convert to regex for other patterns
+    let regexPattern = pattern
+      .replace(/\*\*/g, '§§')
+      .replace(/\*/g, '[^/]*')
+      .replace(/§§/g, '.*')
+      .replace(/\?/g, '.');
+    
+    const regex = new RegExp('^' + regexPattern + '$');
+    return regex.test(path);
   }
 
   /**
