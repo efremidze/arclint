@@ -1,10 +1,10 @@
 # ArcLint
 
-AI-powered VS Code architectural linter that enforces clean architecture patterns in your codebase.
+AI-assisted architecture linting for modern codebases.
 
 ## Overview
 
-ArcLint is an intelligent linting tool that helps maintain architectural consistency in your TypeScript (v0.1) and Swift (v0.2) projects. It infers your project's architecture during onboarding and then enforces architectural rules deterministically using local import graph analysis—no API calls on save.
+ArcLint is an intelligent linting tool that helps maintain architectural consistency. It infers your project's architecture during onboarding and then enforces architectural rules deterministically using local import graph analysis.
 
 ### Key Features
 
@@ -55,7 +55,7 @@ code --install-extension arclint-*.vsix
 
 ### 1. Run Onboarding
 
-Open your project in VS Code and run:
+Open your project and run:
 
 ```
 Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
@@ -117,7 +117,7 @@ Violations appear inline with helpful suggestions.
 
 ## Configuration
 
-### Extension Settings
+### VS Code Settings
 
 Configure ArcLint in VS Code settings:
 
