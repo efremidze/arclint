@@ -19,7 +19,10 @@
     "mvvm"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:arclint.onboard",
+    "onCommand:arclint.lint",
+    "onCommand:arclint.showConfig"
   ],
   "main": "./dist/extension.js",
   "contributes": {
