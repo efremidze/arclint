@@ -9,6 +9,8 @@ import { Dependency, Module } from './types';
 export class ImportGraphAnalyzer {
   private modules: Map<string, Module> = new Map();
 
+  private static readonly SOURCE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.d.ts'];
+
   /**
    * Analyzes a single file and extracts its imports and exports
    */
@@ -32,13 +34,15 @@ export class ImportGraphAnalyzer {
       for (const node of ast.body) {
         if (node.type === 'ImportDeclaration' && node.source.value) {
           const importPath = node.source.value as string;
-          const resolvedPath = this.resolveImportPath(importPath, filePath, rootDir);
+          const resolvedImport = this.resolveImportPath(importPath, filePath, rootDir);
           
           dependencies.push({
             from: relativePath,
-            to: resolvedPath,
+            to: resolvedImport.path,
             importLine: node.loc?.start.line || 0,
-            importStatement: content.split('\n')[node.loc?.start.line ? node.loc.start.line - 1 : 0] || ''
+            importStatement: content.split('\n')[node.loc?.start.line ? node.loc.start.line - 1 : 0] || '',
+            isExternal: resolvedImport.isExternal,
+            isUnresolved: resolvedImport.isUnresolved
           });
         }
 
@@ -78,33 +82,48 @@ export class ImportGraphAnalyzer {
   /**
    * Resolves an import path to a relative module path
    */
-  private resolveImportPath(importPath: string, fromFile: string, rootDir: string): string {
+  private resolveImportPath(
+    importPath: string,
+    fromFile: string,
+    rootDir: string
+  ): { path: string; isExternal: boolean; isUnresolved: boolean } {
     // Skip external packages (node_modules)
     if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
-      return importPath;
+      return { path: importPath, isExternal: true, isUnresolved: false };
     }
 
     const fromDir = path.dirname(fromFile);
     const resolved = path.resolve(fromDir, importPath);
     
     // Try common extensions
-    const extensions = ['.ts', '.tsx', '.js', '.jsx', '.d.ts'];
-    for (const ext of extensions) {
+    for (const ext of ImportGraphAnalyzer.SOURCE_EXTENSIONS) {
       const withExt = resolved + ext;
       if (fs.existsSync(withExt)) {
-        return path.relative(rootDir, withExt);
+        return {
+          path: path.relative(rootDir, withExt),
+          isExternal: false,
+          isUnresolved: false
+        };
       }
     }
 
     // Try index files
-    for (const ext of extensions) {
+    for (const ext of ImportGraphAnalyzer.SOURCE_EXTENSIONS) {
       const indexFile = path.join(resolved, `index${ext}`);
       if (fs.existsSync(indexFile)) {
-        return path.relative(rootDir, indexFile);
+        return {
+          path: path.relative(rootDir, indexFile),
+          isExternal: false,
+          isUnresolved: false
+        };
       }
     }
 
-    return path.relative(rootDir, resolved);
+    return {
+      path: path.relative(rootDir, resolved),
+      isExternal: false,
+      isUnresolved: true
+    };
   }
 
   /**

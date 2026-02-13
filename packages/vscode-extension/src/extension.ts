@@ -92,7 +92,7 @@ async function onboardCommand() {
     const doc = await vscode.workspace.openTextDocument(configPath);
     await vscode.window.showTextDocument(doc);
   } catch (error) {
-    vscode.window.showErrorMessage(`Onboarding failed: ${error}`);
+    vscode.window.showErrorMessage(formatArcLintError(error, 'Onboarding failed'));
   }
 }
 
@@ -184,7 +184,7 @@ async function lintWorkspace() {
     }
   } catch (error) {
     console.error('Linting error:', error);
-    vscode.window.showErrorMessage(`Linting failed: ${error}`);
+    vscode.window.showErrorMessage(formatArcLintError(error, 'Linting failed'));
   }
 }
 
@@ -204,7 +204,7 @@ function createDiagnostic(violation: Violation): vscode.Diagnostic {
 
   const diagnostic = new vscode.Diagnostic(range, violation.message, severity);
   diagnostic.source = 'arclint';
-  diagnostic.code = violation.type;
+  diagnostic.code = violation.ruleId;
 
   return diagnostic;
 }
@@ -218,4 +218,15 @@ function getWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
     return undefined;
   }
   return folders[0];
+}
+
+function formatArcLintError(error: unknown, prefix: string): string {
+  const raw = error instanceof Error ? error.message : String(error);
+  const normalized = raw.toLowerCase();
+
+  if (normalized.includes('supports typescript only') || normalized.includes('use typescript')) {
+    return `${prefix}: ArcLint v0.1 supports TypeScript projects only.`;
+  }
+
+  return `${prefix}: ${raw}`;
 }

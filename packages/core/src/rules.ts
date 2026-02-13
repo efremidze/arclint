@@ -19,7 +19,8 @@ export class RuleEngine {
   static readonly RULE_IDS = {
     DEPENDENCY_DIRECTION: 'dependency-direction',
     CIRCULAR_DEPENDENCY: 'circular-dependency',
-    BUSINESS_LOGIC_PLACEMENT: 'business-logic-placement'
+    BUSINESS_LOGIC_PLACEMENT: 'business-logic-placement',
+    UNRESOLVED_IMPORT: 'unresolved-import'
   } as const;
 
   constructor(config: ArchitectureConfig) {
@@ -39,6 +40,8 @@ export class RuleEngine {
 
     // Assign layers to modules based on patterns
     const modulesWithLayers = this.assignLayersToModules(modules);
+
+    violations.push(...this.checkUnresolvedImports(modulesWithLayers));
 
     // Check dependency direction rules
     if (this.config.rules?.enforceLayerBoundaries !== false) {
@@ -160,6 +163,31 @@ export class RuleEngine {
     return regex.test(path);
   }
 
+  private checkUnresolvedImports(modules: Module[]): Violation[] {
+    const violations: Violation[] = [];
+
+    for (const module of modules) {
+      for (const dep of module.dependencies) {
+        if (dep.isExternal || !dep.isUnresolved) {
+          continue;
+        }
+
+        violations.push({
+          ruleId: RuleEngine.RULE_IDS.UNRESOLVED_IMPORT,
+          type: ViolationType.UNRESOLVED_IMPORT,
+          severity: ViolationSeverity.INFO,
+          message: `Unresolved internal import: '${dep.to}'`,
+          filePath: module.path,
+          line: dep.importLine,
+          suggestion:
+            'Verify file path, extension, tsconfig path aliases, or barrel exports for this import.'
+        });
+      }
+    }
+
+    return violations;
+  }
+
   /**
    * Checks if dependencies respect layer boundaries
    */
@@ -174,6 +202,10 @@ export class RuleEngine {
       if (!layerDef) continue;
 
       for (const dep of module.dependencies) {
+        if (dep.isExternal || dep.isUnresolved) {
+          continue;
+        }
+
         const targetModule = moduleMap.get(dep.to);
         if (!targetModule || !targetModule.layer) continue;
 

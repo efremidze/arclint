@@ -53,7 +53,8 @@ export enum ViolationType {
   PATTERN_INCONSISTENCY = 'pattern_inconsistency',
   MISPLACED_BUSINESS_LOGIC = 'misplaced_business_logic',
   LAYER_VIOLATION = 'layer_violation',
-  CIRCULAR_DEPENDENCY = 'circular_dependency'
+  CIRCULAR_DEPENDENCY = 'circular_dependency',
+  UNRESOLVED_IMPORT = 'unresolved_import'
 }
 
 /**
@@ -64,6 +65,8 @@ export interface Dependency {
   to: string;
   importLine: number;
   importStatement: string;
+  isExternal?: boolean;
+  isUnresolved?: boolean;
 }
 
 /**
