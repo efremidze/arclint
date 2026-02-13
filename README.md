@@ -245,12 +245,13 @@ npm test
 
 TypeScript-first execution plan: see [`docs/typescript-milestones.md`](docs/typescript-milestones.md).
 
-### v0.1 (Current - TypeScript)
+### v0.1 (Current)
 - ✅ Core import graph analyzer
 - ✅ Architecture pattern inference
 - ✅ Rule engine with violation detection
-- ✅ VS Code extension with real-time linting
+- ✅ VS Code extension with real-time linting (first IDE target)
 - ✅ Support for Clean, MVC, MVVM, MVP, Modular patterns
+- ✅ TypeScript support
 
 ### v0.2 (Swift Support)
 - [ ] Swift parser and analyzer
@@ -264,8 +265,22 @@ TypeScript-first execution plan: see [`docs/typescript-milestones.md`](docs/type
 - [ ] Auto-fix capabilities
 - [ ] Learning from codebase-specific patterns
 
+### Language Support Roadmap
+- [x] TypeScript
+- [ ] Swift
+- [ ] Kotlin
+- [ ] Python
+- [ ] GoLang
+- [ ] Rust
+
+### IDE Support Roadmap
+- [x] VS Code
+- [ ] JetBrains IDEs (IntelliJ, WebStorm, PyCharm)
+- [ ] Neovim (LSP)
+- [ ] Zed
+- [ ] Sublime Text
+
 ### Future
-- [ ] Additional language support (Java, Kotlin, Python)
 - [ ] Custom rule definitions
 - [ ] Team configuration sharing
 - [ ] CI/CD integration
