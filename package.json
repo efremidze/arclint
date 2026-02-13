@@ -1,0 +1,29 @@
+{
+  "name": "arclint-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered VS Code architectural linter",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "dev:build": "npm run build --workspace @arclint/core && npm run build --workspace arclint",
+    "dev:watch:core": "npm run watch --workspace @arclint/core",
+    "dev:watch:extension": "npm run watch --workspace arclint",
+    "dev:test-core": "npm run test --workspace @arclint/core",
+    "dev:test-extension": "npm run build --workspace arclint",
+    "dev:run-extension": "code --extensionDevelopmentPath ./packages/vscode-extension"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/efremidze/arclint.git"
+  },
+  "author": "Lasha Efremidze",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
