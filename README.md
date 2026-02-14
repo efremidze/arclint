@@ -224,16 +224,8 @@ TypeScript-first execution plan: see [`docs/typescript-milestones.md`](docs/type
 - ✅ Rule engine with violation detection
 - ✅ VS Code extension with real-time linting (first IDE target)
 - ✅ Support for Clean, MVC, MVVM, MVP, Modular patterns
-- ✅ TypeScript support
-- ✅ Python support (MVP)
 
-### v0.2 (Swift Support)
-- [ ] Swift parser and analyzer
-- [ ] Swift project structure inference
-- [ ] Swift-specific architectural patterns
-- [ ] Xcode integration
-
-### v0.3 (Enhanced LLM Integration)
+### v0.2 (Enhanced LLM Integration)
 - [ ] OpenAI/Anthropic API integration for onboarding
 - [ ] Context-aware suggestions
 - [ ] Auto-fix capabilities
@@ -241,24 +233,11 @@ TypeScript-first execution plan: see [`docs/typescript-milestones.md`](docs/type
 
 ### Language Support Roadmap
 - [x] TypeScript
-- [ ] Swift
+- [x] Swift
 - [ ] Kotlin
 - [x] Python
 - [ ] GoLang
 - [ ] Rust
-
-### IDE Support Roadmap
-- [x] VS Code
-- [ ] JetBrains IDEs (IntelliJ, WebStorm, PyCharm)
-- [ ] Neovim (LSP)
-- [ ] Zed
-- [ ] Sublime Text
-
-### Future
-- [ ] Custom rule definitions
-- [ ] Team configuration sharing
-- [ ] CI/CD integration
-- [ ] Architectural debt metrics
 
 ## Contributing
 
