@@ -210,8 +210,8 @@ npm run watch
 ### Testing
 
 ```bash
-# Run tests (when implemented)
-npm test
+# Run tests
+npm run test
 ```
 
 ## Roadmap
