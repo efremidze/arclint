@@ -27,7 +27,7 @@ jobs:
       - name: Build workspaces
         run: npm run dev:build
 
-      - name: Run core tests (includes Swift support)
+      - name: Run core tests
         run: npm run dev:test-core
 
       - name: Verify extension build

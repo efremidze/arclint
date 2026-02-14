@@ -154,6 +154,8 @@ export class OnboardingService {
     const tsConfigPath = path.join(rootDir, 'tsconfig.json');
     const packageJsonPath = path.join(rootDir, 'package.json');
     const packageSwiftPath = path.join(rootDir, 'Package.swift');
+    const pyprojectPath = path.join(rootDir, 'pyproject.toml');
+    const requirementsPath = path.join(rootDir, 'requirements.txt');
 
     // Check for TypeScript
     if (fs.existsSync(tsConfigPath)) {
@@ -163,6 +165,10 @@ export class OnboardingService {
     // Check for Swift package
     if (fs.existsSync(packageSwiftPath)) {
       return Language.SWIFT;
+    }
+
+    if (fs.existsSync(pyprojectPath) || fs.existsSync(requirementsPath)) {
+      return Language.PYTHON;
     }
 
     // Check package.json for TypeScript dependency
@@ -178,6 +184,10 @@ export class OnboardingService {
     // Check for Swift files (recursive, bounded depth)
     if (await this.hasSwiftFiles(rootDir, 3)) {
       return Language.SWIFT;
+    }
+
+    if (await this.hasPythonFiles(rootDir, 3)) {
+      return Language.PYTHON;
     }
 
     // Default to JavaScript
@@ -218,6 +228,13 @@ export class OnboardingService {
       return './';
     }
 
+    if (language === Language.PYTHON) {
+      if (fs.existsSync(path.join(rootDir, 'src'))) {
+        return './src';
+      }
+      return './';
+    }
+
     if (fs.existsSync(path.join(rootDir, 'src'))) {
       return './src';
     }
@@ -236,6 +253,42 @@ export class OnboardingService {
 
         const fullPath = path.join(current, entry.name);
         if (entry.isFile() && entry.name.endsWith('.swift')) {
+          return true;
+        }
+        if (entry.isDirectory()) {
+          const found = await walk(fullPath, depth + 1);
+          if (found) return true;
+        }
+      }
+
+      return false;
+    }
+
+    try {
+      return await walk(dir, 0);
+    } catch {
+      return false;
+    }
+  }
+
+  private async hasPythonFiles(dir: string, maxDepth: number): Promise<boolean> {
+    async function walk(current: string, depth: number): Promise<boolean> {
+      if (depth > maxDepth) return false;
+
+      const entries = await fs.promises.readdir(current, { withFileTypes: true });
+      for (const entry of entries) {
+        if (
+          entry.name === '.git' ||
+          entry.name === '.venv' ||
+          entry.name === 'venv' ||
+          entry.name === '__pycache__' ||
+          entry.name === 'node_modules'
+        ) {
+          continue;
+        }
+
+        const fullPath = path.join(current, entry.name);
+        if (entry.isFile() && entry.name.endsWith('.py')) {
           return true;
         }
         if (entry.isDirectory()) {
