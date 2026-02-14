@@ -315,12 +315,30 @@ export class RuleEngine {
     ];
 
     for (const module of modules) {
-      // Only check presentation/view layers
-      if (
+      const isPresentationLayer =
         module.layer === LayerType.PRESENTATION ||
         module.layer === LayerType.VIEW ||
-        module.layer === LayerType.UI
-      ) {
+        module.layer === LayerType.UI;
+
+      // Only check presentation/view layers
+      if (isPresentationLayer) {
+        for (const signal of module.signals ?? []) {
+          if (!signal.id.startsWith('swift-view-')) {
+            continue;
+          }
+
+          violations.push({
+            ruleId: RuleEngine.RULE_IDS.BUSINESS_LOGIC_PLACEMENT,
+            type: ViolationType.MISPLACED_BUSINESS_LOGIC,
+            severity: ViolationSeverity.WARNING,
+            message: signal.message,
+            filePath: module.path,
+            line: signal.line,
+            suggestion:
+              'Move this logic from the View into a ViewModel or service to keep MVVM boundaries clear.'
+          });
+        }
+
         // Check if module exports contain business logic indicators
         for (const exportName of module.exports) {
           const lowerName = exportName.toLowerCase();

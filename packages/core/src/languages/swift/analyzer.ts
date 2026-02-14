@@ -1,6 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Dependency, Module } from '../../types';
+import { Dependency, Module, ModuleSignal } from '../../types';
+
+interface LineScope {
+  start: number;
+  end: number;
+}
 
 /**
  * Swift import graph analyzer (MVP).
@@ -39,11 +44,13 @@ export class SwiftImportGraphAnalyzer {
 
     const dependencies = this.parseImports(content, relativePath, localModuleIndex);
     const exports = this.extractExports(content);
+    const signals = this.detectAntiPatternSignals(content);
 
     return {
       path: relativePath,
       dependencies,
-      exports
+      exports,
+      signals
     };
   }
 
@@ -90,6 +97,125 @@ export class SwiftImportGraphAnalyzer {
     }
 
     return exports;
+  }
+
+  private detectAntiPatternSignals(content: string): ModuleSignal[] {
+    const signals: ModuleSignal[] = [];
+    const lines = content.split('\n');
+    const viewScopes = this.extractSwiftUIViewScopes(lines);
+
+    if (viewScopes.length === 0) {
+      return signals;
+    }
+
+    const networkingLine = this.findFirstLineInScopes(lines, viewScopes, [
+      /\bURLSession\b/,
+      /\.dataTask\s*\(/,
+      /\bURLRequest\s*\(/,
+      /\bawait\s+URLSession\b/
+    ]);
+    if (networkingLine !== null) {
+      signals.push({
+        id: 'swift-view-networking',
+        line: networkingLine,
+        message: 'Networking logic detected in SwiftUI View.'
+      });
+    }
+
+    const decodingLine = this.findFirstLineInScopes(lines, viewScopes, [/\bJSONDecoder\s*\(/]);
+    if (decodingLine !== null) {
+      signals.push({
+        id: 'swift-view-decoding',
+        line: decodingLine,
+        message: 'JSON decoding detected in SwiftUI View.'
+      });
+    }
+
+    const businessLogicLine = this.findFirstLineInScopesByPredicate(
+      lines,
+      viewScopes,
+      (line, lineIndex, allLines) => {
+        if (!/\.reduce\s*\(/.test(line)) {
+          return false;
+        }
+
+        // Reduce noise: only flag reduce calls that also perform arithmetic nearby.
+        const end = Math.min(allLines.length, lineIndex + 4);
+        const neighborhood = allLines.slice(lineIndex, end).join(' ');
+        return /[+*/-]/.test(neighborhood);
+      }
+    );
+    if (businessLogicLine !== null) {
+      signals.push({
+        id: 'swift-view-business-logic',
+        line: businessLogicLine,
+        message: 'Business calculation (.reduce) detected in SwiftUI View.'
+      });
+    }
+
+    return signals;
+  }
+
+  private extractSwiftUIViewScopes(lines: string[]): LineScope[] {
+    const scopes: LineScope[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (!/\bstruct\s+\w+\s*:\s*View\b/.test(line)) {
+        continue;
+      }
+
+      let braceDepth = this.countChar(line, '{') - this.countChar(line, '}');
+      if (braceDepth <= 0) {
+        continue;
+      }
+
+      let endLine = i + 1;
+      for (let j = i + 1; j < lines.length; j++) {
+        braceDepth += this.countChar(lines[j], '{');
+        braceDepth -= this.countChar(lines[j], '}');
+        endLine = j + 1;
+        if (braceDepth <= 0) {
+          break;
+        }
+      }
+
+      scopes.push({ start: i + 1, end: endLine });
+    }
+
+    return scopes;
+  }
+
+  private findFirstLineInScopes(
+    lines: string[],
+    scopes: LineScope[],
+    patterns: RegExp[]
+  ): number | null {
+    return this.findFirstLineInScopesByPredicate(
+      lines,
+      scopes,
+      (line) => patterns.some((pattern) => pattern.test(line))
+    );
+  }
+
+  private findFirstLineInScopesByPredicate(
+    lines: string[],
+    scopes: LineScope[],
+    predicate: (line: string, lineIndex: number, allLines: string[]) => boolean
+  ): number | null {
+    for (const scope of scopes) {
+      for (let i = scope.start - 1; i < scope.end; i++) {
+        if (predicate(lines[i], i, lines)) {
+          return i + 1;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private countChar(value: string, char: string): number {
+    return value.split(char).length - 1;
   }
 
   private buildLocalModuleIndex(files: string[], rootDir: string): Map<string, string> {
