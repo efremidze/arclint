@@ -16,7 +16,8 @@ export enum ArchitecturePattern {
 export enum Language {
   TYPESCRIPT = 'typescript',
   JAVASCRIPT = 'javascript',
-  SWIFT = 'swift'
+  SWIFT = 'swift',
+  PYTHON = 'python'
 }
 
 /**

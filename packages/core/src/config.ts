@@ -113,12 +113,19 @@ export class ConfigParser {
     rootDir: string
   ): ArchitectureConfig {
     const isSwift = language === Language.SWIFT;
+    const isPython = language === Language.PYTHON;
 
     const config: ArchitectureConfig = {
       version: '0.1.0',
       pattern,
       language,
-      rootDir: rootDir || (language === Language.SWIFT ? './Sources' : './src'),
+      rootDir:
+        rootDir ||
+        (language === Language.SWIFT
+          ? './Sources'
+          : language === Language.PYTHON
+          ? './src'
+          : './src'),
       layers: [],
       rules: {
         enforceLayerBoundaries: true,
@@ -128,6 +135,8 @@ export class ConfigParser {
       ignore:
         language === Language.SWIFT
           ? ['**/*Tests.swift', '**/Tests/**', '**/.build/**']
+          : language === Language.PYTHON
+          ? ['**/tests/**', '**/test_*.py', '**/*_test.py', '**/__pycache__/**', '**/.venv/**']
           : ['**/*.test.ts', '**/*.test.tsx', '**/node_modules/**']
     };
 
@@ -137,25 +146,30 @@ export class ConfigParser {
         config.layers = [
           {
             name: LayerType.PRESENTATION,
-            pattern: isSwift ? '**/Presentation/**' : '**/presentation/**',
+            pattern: isSwift ? '**/Presentation/**' : isPython ? '**/presentation/**' : '**/presentation/**',
             canDependOn: [LayerType.DOMAIN],
             description: 'UI components and presentation logic'
           },
           {
             name: LayerType.DOMAIN,
-            pattern: isSwift ? '**/Domain/**' : '**/domain/**',
+            pattern: isSwift ? '**/Domain/**' : isPython ? '**/domain/**' : '**/domain/**',
             canDependOn: [],
             description: 'Business logic and entities'
           },
           {
             name: LayerType.DATA,
-            pattern: isSwift ? '**/Data/**' : '**/data/**',
+            pattern: isSwift ? '**/Data/**' : isPython ? '**/data/**' : '**/data/**',
             canDependOn: [LayerType.DOMAIN],
             description: 'Data access and repositories'
           },
           {
             name: LayerType.INFRASTRUCTURE,
-            pattern: isSwift ? '**/Infrastructure/**' : '**/infrastructure/**',
+            pattern:
+              isSwift
+                ? '**/Infrastructure/**'
+                : isPython
+                ? '**/infrastructure/**'
+                : '**/infrastructure/**',
             canDependOn: [LayerType.DOMAIN, LayerType.DATA],
             description: 'External services and frameworks'
           }
@@ -166,19 +180,24 @@ export class ConfigParser {
         config.layers = [
           {
             name: LayerType.MODEL,
-            pattern: isSwift ? '**/Models/**' : '**/model?(s)/**',
+            pattern: isSwift ? '**/Models/**' : isPython ? '**/models/**' : '**/model?(s)/**',
             canDependOn: [],
             description: 'Data models'
           },
           {
             name: LayerType.VIEW,
-            pattern: isSwift ? '**/Views/**' : '**/view?(s)/**',
+            pattern: isSwift ? '**/Views/**' : isPython ? '**/views/**' : '**/view?(s)/**',
             canDependOn: [],
             description: 'UI views'
           },
           {
             name: LayerType.CONTROLLER,
-            pattern: isSwift ? '**/Controllers/**' : '**/controller?(s)/**',
+            pattern:
+              isSwift
+                ? '**/Controllers/**'
+                : isPython
+                ? '**/controllers/**'
+                : '**/controller?(s)/**',
             canDependOn: [LayerType.MODEL, LayerType.VIEW],
             description: 'Controllers handling user input'
           }
@@ -189,19 +208,24 @@ export class ConfigParser {
         config.layers = [
           {
             name: LayerType.MODEL,
-            pattern: isSwift ? '**/Models/**' : '**/model?(s)/**',
+            pattern: isSwift ? '**/Models/**' : isPython ? '**/models/**' : '**/model?(s)/**',
             canDependOn: [],
             description: 'Data models'
           },
           {
             name: LayerType.VIEW,
-            pattern: isSwift ? '**/Views/**' : '**/view?(s)/**',
+            pattern: isSwift ? '**/Views/**' : isPython ? '**/views/**' : '**/view?(s)/**',
             canDependOn: [LayerType.VIEWMODEL],
             description: 'UI views'
           },
           {
             name: LayerType.VIEWMODEL,
-            pattern: isSwift ? '**/ViewModels/**' : '**/viewmodel?(s)/**',
+            pattern:
+              isSwift
+                ? '**/ViewModels/**'
+                : isPython
+                ? '**/viewmodels/**'
+                : '**/viewmodel?(s)/**',
             canDependOn: [LayerType.MODEL],
             description: 'View models with presentation logic'
           }
@@ -212,19 +236,24 @@ export class ConfigParser {
         config.layers = [
           {
             name: LayerType.MODEL,
-            pattern: isSwift ? '**/Models/**' : '**/model?(s)/**',
+            pattern: isSwift ? '**/Models/**' : isPython ? '**/models/**' : '**/model?(s)/**',
             canDependOn: [],
             description: 'Data models'
           },
           {
             name: LayerType.VIEW,
-            pattern: isSwift ? '**/Views/**' : '**/view?(s)/**',
+            pattern: isSwift ? '**/Views/**' : isPython ? '**/views/**' : '**/view?(s)/**',
             canDependOn: [],
             description: 'UI views'
           },
           {
             name: LayerType.PRESENTER,
-            pattern: isSwift ? '**/Presenters/**' : '**/presenter?(s)/**',
+            pattern:
+              isSwift
+                ? '**/Presenters/**'
+                : isPython
+                ? '**/presenters/**'
+                : '**/presenter?(s)/**',
             canDependOn: [LayerType.MODEL, LayerType.VIEW],
             description: 'Presenters handling view logic'
           }
@@ -235,19 +264,19 @@ export class ConfigParser {
         config.layers = [
           {
             name: LayerType.UI,
-            pattern: isSwift ? '**/UI/**' : '**/ui/**',
+            pattern: isSwift ? '**/UI/**' : isPython ? '**/ui/**' : '**/ui/**',
             canDependOn: [LayerType.BUSINESS_LOGIC],
             description: 'User interface module'
           },
           {
             name: LayerType.BUSINESS_LOGIC,
-            pattern: isSwift ? '**/Business/**' : '**/business/**',
+            pattern: isSwift ? '**/Business/**' : isPython ? '**/business/**' : '**/business/**',
             canDependOn: [],
             description: 'Business logic module'
           },
           {
             name: LayerType.DATA,
-            pattern: isSwift ? '**/Data/**' : '**/data/**',
+            pattern: isSwift ? '**/Data/**' : isPython ? '**/data/**' : '**/data/**',
             canDependOn: [LayerType.BUSINESS_LOGIC],
             description: 'Data access module'
           }
