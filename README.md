@@ -189,33 +189,6 @@ export function calculateUserAge(birthDate: Date): number { ... }
 
 ## Development
 
-### Project Structure
-
-```
-arclint/
-├── packages/
-│   ├── core/                 # Core linting engine
-│   │   ├── src/
-│   │   │   ├── types.ts      # Type definitions
-│   │   │   ├── analyzer.ts   # Import graph analyzer
-│   │   │   ├── config.ts     # Configuration parser
-│   │   │   ├── rules.ts      # Rule engine
-│   │   │   ├── onboarding.ts # Architecture inference
-│   │   │   └── index.ts      # Main exports
-│   │   ├── package.json
-│   │   └── tsconfig.json
-│   │
-│   └── vscode-extension/     # VS Code extension
-│       ├── src/
-│       │   └── extension.ts  # Extension entry point
-│       ├── package.json
-│       └── tsconfig.json
-│
-├── package.json              # Monorepo root
-├── LICENSE
-└── README.md
-```
-
 ### Building from Source
 
 ```bash
@@ -287,10 +260,6 @@ TypeScript-first execution plan: see [`docs/typescript-milestones.md`](docs/type
 - [ ] CI/CD integration
 - [ ] Architectural debt metrics
 
-## Examples
-
-See the `/examples` directory (coming soon) for sample projects demonstrating each architectural pattern.
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -298,13 +267,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
-## Author
-
-Lasha Efremidze
-
-## Support
-
-- 🐛 [Report Issues](https://github.com/efremidze/arclint/issues)
-- 💬 [Discussions](https://github.com/efremidze/arclint/discussions)
-- 📧 Email: [Contact](mailto:lasha.efremidze@gmail.com)
