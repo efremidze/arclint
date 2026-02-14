@@ -13,7 +13,7 @@ ArcLint is an intelligent linting tool that helps maintain architectural consist
 - ⚡ **Fast & Deterministic**: Local import graph analysis with no API calls during linting
 - 🚫 **Violation Detection**: Flags dependency direction violations, pattern inconsistencies, and misplaced business logic
 - 🔄 **Real-time Feedback**: Integrates seamlessly with VS Code for instant feedback
-- 🎯 **Zero Config**: Works out of the box after one-time onboarding
+- 🎯 **Quick Setup**: Works after a short onboarding flow that generates `.arclint.yml`
 
 ### Supported Architectures
 
@@ -216,16 +216,19 @@ npm run test
 
 ## Roadmap
 
-TypeScript-first execution plan: see [`docs/typescript-milestones.md`](docs/typescript-milestones.md).
-
-### v0.1 (Current)
+### v0.1 (Shipped)
 - ✅ Core import graph analyzer
 - ✅ Architecture pattern inference
 - ✅ Rule engine with violation detection
 - ✅ VS Code extension with real-time linting (first IDE target)
 - ✅ Support for Clean, MVC, MVVM, MVP, Modular patterns
 
-### v0.2 (Enhanced LLM Integration)
+### v0.2 (Shipped)
+- ✅ Swift support
+- ✅ Python support
+- ✅ Language-specific folder structure in `packages/core/src/languages/*`
+
+### v0.3 (Next - Enhanced LLM Integration)
 - [ ] OpenAI/Anthropic API integration for onboarding
 - [ ] Context-aware suggestions
 - [ ] Auto-fix capabilities
@@ -236,7 +239,7 @@ TypeScript-first execution plan: see [`docs/typescript-milestones.md`](docs/type
 - [x] Swift
 - [ ] Kotlin
 - [x] Python
-- [ ] GoLang
+- [ ] Go
 - [ ] Rust
 
 ## Contributing
