@@ -276,7 +276,7 @@ describe('Kotlin support', () => {
       rules: {
         enforceLayerBoundaries: false,
         preventCircularDependencies: false,
-        businessLogicInDomain: true
+        businessLogicInDomain: false
       },
       ignore: []
     };

@@ -60,6 +60,11 @@ export class RuleEngine {
       violations.push(...this.checkBusinessLogicPlacement(modulesWithLayers));
     }
 
+    // Kotlin architecture checks should run independently from businessLogicInDomain.
+    if (this.config.language === Language.KOTLIN) {
+      violations.push(...this.checkKotlinArchitectureAntiPatterns(modulesWithLayers));
+    }
+
     return {
       violations,
       moduleCount: modules.length,
@@ -343,10 +348,6 @@ export class RuleEngine {
           }
         }
       }
-    }
-
-    if (this.config.language === Language.KOTLIN) {
-      violations.push(...this.checkKotlinArchitectureAntiPatterns(modules));
     }
 
     return violations;
