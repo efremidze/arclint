@@ -70,6 +70,12 @@ export interface Dependency {
   isUnresolved?: boolean;
 }
 
+export interface ModuleSignal {
+  id: string;
+  line: number;
+  message: string;
+}
+
 /**
  * Module information in the codebase
  */
@@ -78,6 +84,7 @@ export interface Module {
   layer?: LayerType;
   dependencies: Dependency[];
   exports: string[];
+  signals?: ModuleSignal[];
 }
 
 /**
