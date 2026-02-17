@@ -5,7 +5,8 @@ const path = require('path');
 const { ConfigParser } = require('../dist/config');
 const { KotlinImportGraphAnalyzer } = require('../dist/languages/kotlin/analyzer');
 const { OnboardingService } = require('../dist/onboarding');
-const { Language, ArchitecturePattern } = require('../dist/types');
+const { RuleEngine } = require('../dist/rules');
+const { Language, ArchitecturePattern, LayerType, ViolationType } = require('../dist/types');
 
 describe('Kotlin support', () => {
   test('createDefaultConfig supports kotlin defaults', () => {
@@ -127,5 +128,125 @@ describe('Kotlin support', () => {
     const language = await onboarding.detectLanguage(tempDir);
 
     expect(language).toBe(Language.JAVASCRIPT);
+  });
+
+  test('flags Kotlin UI imports of data/infrastructure concerns', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-kotlin-antipattern-ui-'));
+    const rootDir = path.join(tempDir, 'src', 'main', 'kotlin');
+    const uiDir = path.join(rootDir, 'com', 'example', 'app', 'ui');
+    const dataDir = path.join(rootDir, 'com', 'example', 'app', 'data');
+
+    fs.mkdirSync(uiDir, { recursive: true });
+    fs.mkdirSync(dataDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(dataDir, 'UserRepository.kt'),
+      ['package com.example.app.data', '', 'class UserRepository'].join('\n'),
+      'utf8'
+    );
+
+    fs.writeFileSync(
+      path.join(uiDir, 'ProfileScreen.kt'),
+      [
+        'package com.example.app.ui',
+        '',
+        'import com.example.app.data.UserRepository',
+        'import retrofit2.Retrofit',
+        '',
+        'class ProfileScreen'
+      ].join('\n'),
+      'utf8'
+    );
+
+    const analyzer = new KotlinImportGraphAnalyzer();
+    const modules = await analyzer.analyzeDirectory(rootDir, rootDir);
+
+    const config = {
+      version: '0.1.0',
+      pattern: ArchitecturePattern.MVVM,
+      language: Language.KOTLIN,
+      rootDir: './src/main/kotlin',
+      layers: [
+        { name: LayerType.VIEW, pattern: '**/ui/**', canDependOn: [LayerType.VIEWMODEL] },
+        { name: LayerType.VIEWMODEL, pattern: '**/viewmodels/**', canDependOn: [LayerType.MODEL] },
+        { name: LayerType.MODEL, pattern: '**/domain/**', canDependOn: [] },
+        { name: LayerType.DATA, pattern: '**/data/**', canDependOn: [LayerType.MODEL] }
+      ],
+      rules: {
+        enforceLayerBoundaries: false,
+        preventCircularDependencies: false,
+        businessLogicInDomain: true
+      },
+      ignore: []
+    };
+
+    const result = new RuleEngine(config).analyze(modules);
+    const violation = result.violations.find(
+      (v) =>
+        v.ruleId === 'kotlin-architecture-anti-pattern' &&
+        v.type === ViolationType.MISPLACED_BUSINESS_LOGIC &&
+        v.filePath === 'com/example/app/ui/ProfileScreen.kt'
+    );
+
+    expect(violation).toBeDefined();
+  });
+
+  test('flags Kotlin ViewModel depending on UI types', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-kotlin-antipattern-vm-'));
+    const rootDir = path.join(tempDir, 'src', 'main', 'kotlin');
+    const uiDir = path.join(rootDir, 'com', 'example', 'app', 'ui');
+    const viewModelDir = path.join(rootDir, 'com', 'example', 'app', 'viewmodels');
+
+    fs.mkdirSync(uiDir, { recursive: true });
+    fs.mkdirSync(viewModelDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(uiDir, 'UiState.kt'),
+      ['package com.example.app.ui', '', 'data class UiState(val title: String)'].join('\n'),
+      'utf8'
+    );
+
+    fs.writeFileSync(
+      path.join(viewModelDir, 'ProfileViewModel.kt'),
+      [
+        'package com.example.app.viewmodels',
+        '',
+        'import com.example.app.ui.UiState',
+        '',
+        'class ProfileViewModel'
+      ].join('\n'),
+      'utf8'
+    );
+
+    const analyzer = new KotlinImportGraphAnalyzer();
+    const modules = await analyzer.analyzeDirectory(rootDir, rootDir);
+
+    const config = {
+      version: '0.1.0',
+      pattern: ArchitecturePattern.MVVM,
+      language: Language.KOTLIN,
+      rootDir: './src/main/kotlin',
+      layers: [
+        { name: LayerType.VIEW, pattern: '**/ui/**', canDependOn: [LayerType.VIEWMODEL] },
+        { name: LayerType.VIEWMODEL, pattern: '**/viewmodels/**', canDependOn: [LayerType.MODEL] },
+        { name: LayerType.MODEL, pattern: '**/domain/**', canDependOn: [] }
+      ],
+      rules: {
+        enforceLayerBoundaries: false,
+        preventCircularDependencies: false,
+        businessLogicInDomain: true
+      },
+      ignore: []
+    };
+
+    const result = new RuleEngine(config).analyze(modules);
+    const violation = result.violations.find(
+      (v) =>
+        v.ruleId === 'kotlin-architecture-anti-pattern' &&
+        v.type === ViolationType.MISPLACED_BUSINESS_LOGIC &&
+        v.filePath === 'com/example/app/viewmodels/ProfileViewModel.kt'
+    );
+
+    expect(violation).toBeDefined();
   });
 });

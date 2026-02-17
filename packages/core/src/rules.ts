@@ -7,7 +7,8 @@ import {
   ViolationSeverity,
   LayerType,
   LayerDefinition,
-  AnalysisResult
+  AnalysisResult,
+  Language
 } from './types';
 
 /**
@@ -20,7 +21,8 @@ export class RuleEngine {
     DEPENDENCY_DIRECTION: 'dependency-direction',
     CIRCULAR_DEPENDENCY: 'circular-dependency',
     BUSINESS_LOGIC_PLACEMENT: 'business-logic-placement',
-    UNRESOLVED_IMPORT: 'unresolved-import'
+    UNRESOLVED_IMPORT: 'unresolved-import',
+    KOTLIN_ARCHITECTURE_ANTI_PATTERN: 'kotlin-architecture-anti-pattern'
   } as const;
 
   constructor(config: ArchitectureConfig) {
@@ -337,6 +339,122 @@ export class RuleEngine {
               filePath: module.path,
               line: 1,
               suggestion: `Move business logic to the domain/business logic layer. Keep presentation layer focused on UI concerns.`
+            });
+          }
+        }
+      }
+    }
+
+    if (this.config.language === Language.KOTLIN) {
+      violations.push(...this.checkKotlinArchitectureAntiPatterns(modules));
+    }
+
+    return violations;
+  }
+
+  private checkKotlinArchitectureAntiPatterns(modules: Module[]): Violation[] {
+    const violations: Violation[] = [];
+
+    for (const module of modules) {
+      const modulePath = module.path.replace(/\\/g, '/');
+      const lowerPath = modulePath.toLowerCase();
+
+      const isPresentationModule =
+        module.layer === LayerType.PRESENTATION ||
+        module.layer === LayerType.VIEW ||
+        module.layer === LayerType.UI ||
+        lowerPath.includes('/ui/') ||
+        lowerPath.includes('/view/') ||
+        lowerPath.includes('/views/') ||
+        lowerPath.endsWith('activity.kt') ||
+        lowerPath.endsWith('fragment.kt') ||
+        lowerPath.endsWith('screen.kt');
+
+      const isViewModelModule =
+        module.layer === LayerType.VIEWMODEL || lowerPath.includes('/viewmodel/') || lowerPath.includes('/viewmodels/');
+
+      const isDomainModule = module.layer === LayerType.DOMAIN || lowerPath.includes('/domain/');
+
+      for (const dep of module.dependencies) {
+        const importStatement = dep.importStatement.toLowerCase();
+        const dependencyPath = dep.to.replace(/\\/g, '/').toLowerCase();
+
+        if (isPresentationModule) {
+          const importsDataLayerDirectly =
+            importStatement.includes('.data.') ||
+            importStatement.includes('.repository.') ||
+            importStatement.includes('.repositories.') ||
+            importStatement.includes('.dao.') ||
+            dependencyPath.includes('/data/') ||
+            dependencyPath.includes('/repository/') ||
+            dependencyPath.includes('/repositories/') ||
+            dependencyPath.includes('/dao/');
+
+          const importsNetworkOrDbFramework =
+            importStatement.includes('retrofit2.') ||
+            importStatement.includes('okhttp3.') ||
+            importStatement.includes('io.ktor.') ||
+            importStatement.includes('androidx.room.') ||
+            importStatement.includes('java.sql.') ||
+            importStatement.includes('javax.sql.');
+
+          if (importsDataLayerDirectly || importsNetworkOrDbFramework) {
+            violations.push({
+              ruleId: RuleEngine.RULE_IDS.KOTLIN_ARCHITECTURE_ANTI_PATTERN,
+              type: ViolationType.MISPLACED_BUSINESS_LOGIC,
+              severity: ViolationSeverity.WARNING,
+              message:
+                'Kotlin UI/presentation module imports data-access or infrastructure concerns directly.',
+              filePath: module.path,
+              line: dep.importLine,
+              suggestion:
+                'Route this dependency through a ViewModel/use-case boundary to keep UI focused on presentation.'
+            });
+          }
+        }
+
+        if (isViewModelModule) {
+          const dependsOnUiModule =
+            dependencyPath.includes('/ui/') ||
+            dependencyPath.includes('/view/') ||
+            dependencyPath.includes('/views/') ||
+            importStatement.includes('.ui.') ||
+            importStatement.includes('.view.') ||
+            importStatement.includes('.views.');
+
+          if (dependsOnUiModule) {
+            violations.push({
+              ruleId: RuleEngine.RULE_IDS.KOTLIN_ARCHITECTURE_ANTI_PATTERN,
+              type: ViolationType.MISPLACED_BUSINESS_LOGIC,
+              severity: ViolationSeverity.WARNING,
+              message: 'Kotlin ViewModel appears to depend on UI-layer types.',
+              filePath: module.path,
+              line: dep.importLine,
+              suggestion:
+                'Keep ViewModel independent from UI classes. Share state via domain models or UI-agnostic DTOs.'
+            });
+          }
+        }
+
+        if (isDomainModule) {
+          const importsFrameworkLayer =
+            importStatement.includes('android.') ||
+            importStatement.includes('androidx.') ||
+            importStatement.includes('retrofit2.') ||
+            importStatement.includes('okhttp3.') ||
+            importStatement.includes('io.ktor.') ||
+            importStatement.includes('androidx.room.');
+
+          if (importsFrameworkLayer) {
+            violations.push({
+              ruleId: RuleEngine.RULE_IDS.KOTLIN_ARCHITECTURE_ANTI_PATTERN,
+              type: ViolationType.MISPLACED_BUSINESS_LOGIC,
+              severity: ViolationSeverity.WARNING,
+              message: 'Kotlin domain module imports framework/infrastructure APIs directly.',
+              filePath: module.path,
+              line: dep.importLine,
+              suggestion:
+                'Move framework dependencies to data/infrastructure layers and depend on interfaces in domain.'
             });
           }
         }
