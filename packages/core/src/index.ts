@@ -12,6 +12,7 @@ import { OnboardingService } from './onboarding';
 import { AnalysisResult, Language, Module } from './types';
 import { SwiftImportGraphAnalyzer } from './languages/swift';
 import { PythonImportGraphAnalyzer } from './languages/python';
+import { KotlinImportGraphAnalyzer } from './languages/kotlin';
 
 interface LanguageAnalyzer {
   analyzeDirectory(dirPath: string, rootDir: string, patterns?: string[]): Promise<Module[]>;
@@ -79,6 +80,8 @@ export class ArcLint {
         return new SwiftImportGraphAnalyzer();
       case Language.PYTHON:
         return new PythonImportGraphAnalyzer();
+      case Language.KOTLIN:
+        return new KotlinImportGraphAnalyzer();
       case Language.TYPESCRIPT:
       case Language.JAVASCRIPT:
       default:

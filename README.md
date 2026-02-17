@@ -134,7 +134,7 @@ Configure ArcLint in VS Code settings:
 ```yaml
 version: string          # Config version (e.g., "0.1.0")
 pattern: string          # Architecture pattern: clean, mvc, mvvm, mvp, modular
-language: string         # Language: typescript, javascript, swift, python
+language: string         # Language: typescript, javascript, swift, kotlin, python
 rootDir: string          # Project root directory (e.g., "./src")
 
 layers:                  # Layer definitions
@@ -237,7 +237,7 @@ npm run test
 ### Language Support Roadmap
 - [x] TypeScript
 - [x] Swift
-- [ ] Kotlin
+- [x] Kotlin
 - [x] Python
 - [ ] Go
 - [ ] Rust
