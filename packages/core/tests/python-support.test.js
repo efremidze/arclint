@@ -61,6 +61,48 @@ describe('Python support', () => {
     expect(cartModule.dependencies.some((d) => d.to === 'django.http' && d.isExternal)).toBe(true);
   });
 
+  test('python analyzer supports multiline parenthesized from-import statements', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-python-multiline-'));
+    const srcDir = path.join(tempDir, 'src');
+    const viewsDir = path.join(srcDir, 'shop', 'views');
+    const servicesDir = path.join(srcDir, 'shop', 'services');
+
+    fs.mkdirSync(viewsDir, { recursive: true });
+    fs.mkdirSync(servicesDir, { recursive: true });
+
+    fs.writeFileSync(path.join(srcDir, 'shop', '__init__.py'), '', 'utf8');
+    fs.writeFileSync(path.join(viewsDir, '__init__.py'), '', 'utf8');
+    fs.writeFileSync(path.join(servicesDir, '__init__.py'), '', 'utf8');
+    fs.writeFileSync(path.join(servicesDir, 'orders.py'), 'def calculate_total(items):\n    return sum(items)\n', 'utf8');
+    fs.writeFileSync(path.join(viewsDir, 'helpers.py'), 'def format_price(value):\n    return f\"{value}\"\n', 'utf8');
+
+    fs.writeFileSync(
+      path.join(viewsDir, 'cart.py'),
+      [
+        'from shop.services.orders import (',
+        '    calculate_total,',
+        ')',
+        '',
+        'from .helpers import (',
+        '    format_price,',
+        ')',
+        '',
+        'def render(items):',
+        '    total = calculate_total(items)',
+        '    return format_price(total)'
+      ].join('\n'),
+      'utf8'
+    );
+
+    const analyzer = new PythonImportGraphAnalyzer();
+    const modules = await analyzer.analyzeDirectory(srcDir, srcDir);
+    const cartModule = modules.find((m) => m.path === 'shop/views/cart.py');
+
+    expect(cartModule).toBeDefined();
+    expect(cartModule.dependencies.some((d) => d.to === 'shop/services/orders.py' && !d.isExternal)).toBe(true);
+    expect(cartModule.dependencies.some((d) => d.to === 'shop/views/helpers.py' && !d.isExternal)).toBe(true);
+  });
+
   test('python unresolved imports are reported as info violations', async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-python-unresolved-'));
     const srcDir = path.join(tempDir, 'src');

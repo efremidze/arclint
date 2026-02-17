@@ -78,24 +78,26 @@ export class PythonImportGraphAnalyzer {
         continue;
       }
 
-      const fromImportMatch = line.match(/^from\s+([.\w]+)\s+import\s+(.+)$/);
+      const fromImportText = this.readFromImportStatement(lines, i);
+      if (fromImportText.consumedLines > 1) {
+        i += fromImportText.consumedLines - 1;
+      }
+
+      const fromImportMatch = fromImportText.statement.match(/^from\s+([.\w]+)\s+import\s+(.+)$/);
       if (!fromImportMatch) {
         continue;
       }
 
       const moduleSpec = fromImportMatch[1];
-      const importedNames = fromImportMatch[2]
-        .split(',')
-        .map((part) => part.trim().split(/\s+as\s+/)[0].trim())
-        .filter(Boolean);
+      const importedNames = this.parseImportedNames(fromImportMatch[2]);
 
       const resolvedBase = this.resolveModuleSpec(moduleSpec, fromModule);
       if (!resolvedBase) {
         dependencies.push({
           from: fromPath,
           to: moduleSpec,
-          importLine: i + 1,
-          importStatement: line,
+          importLine: fromImportText.lineNumber,
+          importStatement: fromImportText.statement,
           isExternal: true,
           isUnresolved: false
         });
@@ -104,7 +106,14 @@ export class PythonImportGraphAnalyzer {
 
       if (importedNames.length === 1 && importedNames[0] === '*') {
         dependencies.push(
-          this.resolveDependency(fromPath, i + 1, line, resolvedBase, moduleIndex, topLevelPackages)
+          this.resolveDependency(
+            fromPath,
+            fromImportText.lineNumber,
+            fromImportText.statement,
+            resolvedBase,
+            moduleIndex,
+            topLevelPackages
+          )
         );
         continue;
       }
@@ -114,7 +123,14 @@ export class PythonImportGraphAnalyzer {
         const childModule = `${resolvedBase}.${importedName}`;
         if (moduleIndex.has(childModule)) {
           dependencies.push(
-            this.resolveDependency(fromPath, i + 1, line, childModule, moduleIndex, topLevelPackages)
+            this.resolveDependency(
+              fromPath,
+              fromImportText.lineNumber,
+              fromImportText.statement,
+              childModule,
+              moduleIndex,
+              topLevelPackages
+            )
           );
           addedChildModuleDependency = true;
         }
@@ -122,12 +138,77 @@ export class PythonImportGraphAnalyzer {
 
       if (!addedChildModuleDependency) {
         dependencies.push(
-          this.resolveDependency(fromPath, i + 1, line, resolvedBase, moduleIndex, topLevelPackages)
+          this.resolveDependency(
+            fromPath,
+            fromImportText.lineNumber,
+            fromImportText.statement,
+            resolvedBase,
+            moduleIndex,
+            topLevelPackages
+          )
         );
       }
     }
 
     return dependencies;
+  }
+
+  private readFromImportStatement(
+    lines: string[],
+    startLineIndex: number
+  ): { statement: string; consumedLines: number; lineNumber: number } {
+    const firstLine = lines[startLineIndex].trim();
+    if (!/^from\s+[.\w]+\s+import\b/.test(firstLine)) {
+      return {
+        statement: firstLine,
+        consumedLines: 1,
+        lineNumber: startLineIndex + 1
+      };
+    }
+
+    const startsParenImport = /^from\s+[.\w]+\s+import\s*\(/.test(firstLine);
+    if (!startsParenImport) {
+      return {
+        statement: firstLine,
+        consumedLines: 1,
+        lineNumber: startLineIndex + 1
+      };
+    }
+
+    const collected: string[] = [firstLine];
+    let consumedLines = 1;
+    let parenDepth = this.countChar(firstLine, '(') - this.countChar(firstLine, ')');
+
+    while (parenDepth > 0 && startLineIndex + consumedLines < lines.length) {
+      const nextLine = lines[startLineIndex + consumedLines].trim();
+      collected.push(nextLine);
+      consumedLines++;
+      parenDepth += this.countChar(nextLine, '(') - this.countChar(nextLine, ')');
+    }
+
+    return {
+      statement: collected.join(' ').replace(/\s+/g, ' ').trim(),
+      consumedLines,
+      lineNumber: startLineIndex + 1
+    };
+  }
+
+  private parseImportedNames(importSpec: string): string[] {
+    const normalized = importSpec
+      .trim()
+      .replace(/^\(\s*/, '')
+      .replace(/\s*\)\s*$/, '');
+
+    return normalized
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => part.replace(/,$/, '').split(/\s+as\s+/)[0].trim())
+      .filter(Boolean);
+  }
+
+  private countChar(value: string, char: string): number {
+    return value.split(char).length - 1;
   }
 
   private resolveDependency(
