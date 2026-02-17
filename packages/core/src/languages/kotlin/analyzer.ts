@@ -9,6 +9,14 @@ interface KotlinFileData {
   exports: string[];
 }
 
+interface KotlinSanitizerState {
+  blockCommentDepth: number;
+  inRawString: boolean;
+  inDoubleQuote: boolean;
+  inSingleQuote: boolean;
+  escaped: boolean;
+}
+
 export class KotlinImportGraphAnalyzer {
   private modules: Map<string, Module> = new Map();
 
@@ -64,10 +72,11 @@ export class KotlinImportGraphAnalyzer {
   ): Dependency[] {
     const dependencies: Dependency[] = [];
     const lines = content.split('\n');
+    const sanitizedLines = this.sanitizeLinesForParsing(content);
 
     for (let i = 0; i < lines.length; i++) {
       const originalLine = lines[i];
-      const cleanedLine = this.stripInlineComment(originalLine).trim();
+      const cleanedLine = sanitizedLines[i].trim();
       if (!cleanedLine || cleanedLine.startsWith('package ')) {
         continue;
       }
@@ -226,31 +235,37 @@ export class KotlinImportGraphAnalyzer {
   }
 
   private extractPackageName(content: string): string | null {
-    const packageMatch = content.match(/^\s*package\s+([A-Za-z_][A-Za-z0-9_.]*)\s*$/m);
-    return packageMatch ? packageMatch[1] : null;
+    const lines = this.sanitizeLinesForParsing(content);
+    for (const line of lines) {
+      const packageMatch = line.trim().match(/^package\s+([A-Za-z_][A-Za-z0-9_.]*)$/);
+      if (packageMatch) {
+        return packageMatch[1];
+      }
+    }
+    return null;
   }
 
   private extractExports(content: string): string[] {
     const exports: string[] = [];
-    const lines = content.split('\n');
+    const lines = this.sanitizeLinesForParsing(content);
     let braceDepth = 0;
 
     for (const line of lines) {
-      const cleanedLine = this.stripInlineComment(line);
-      const trimmed = cleanedLine.trim();
+      const trimmed = line.trim();
       const isTopLevel = braceDepth === 0;
 
       if (isTopLevel) {
         const declarationMatch = trimmed.match(
           /^(?:(?:public|private|internal|protected|open|abstract|final|sealed|data|enum|annotation|value|inline|expect|actual|external|tailrec|suspend|operator|infix|const|lateinit|override)\s+)*(class|interface|object|typealias|fun)\s+([A-Za-z_][A-Za-z0-9_]*)\b/
         );
-        if (declarationMatch) {
+        const hasRestrictedVisibility = /\b(private|protected)\b/.test(trimmed);
+        if (declarationMatch && !hasRestrictedVisibility) {
           exports.push(declarationMatch[2]);
         }
       }
 
-      braceDepth += this.countChar(cleanedLine, '{');
-      braceDepth -= this.countChar(cleanedLine, '}');
+      braceDepth += this.countChar(line, '{');
+      braceDepth -= this.countChar(line, '}');
       braceDepth = Math.max(braceDepth, 0);
     }
 
@@ -261,41 +276,137 @@ export class KotlinImportGraphAnalyzer {
     return value.split(char).length - 1;
   }
 
-  private stripInlineComment(line: string): string {
-    let inSingleQuote = false;
-    let inDoubleQuote = false;
-    let escaped = false;
+  private sanitizeLinesForParsing(content: string): string[] {
+    const state: KotlinSanitizerState = {
+      blockCommentDepth: 0,
+      inRawString: false,
+      inDoubleQuote: false,
+      inSingleQuote: false,
+      escaped: false
+    };
+
+    return content.split('\n').map((line) => this.sanitizeLineForParsing(line, state));
+  }
+
+  private sanitizeLineForParsing(line: string, state: KotlinSanitizerState): string {
+    let sanitized = '';
 
     for (let i = 0; i < line.length; i++) {
       const current = line[i];
       const next = line[i + 1];
+      const next2 = line[i + 2];
 
-      if (escaped) {
-        escaped = false;
+      if (state.blockCommentDepth > 0) {
+        if (current === '/' && next === '*') {
+          state.blockCommentDepth += 1;
+          sanitized += '  ';
+          i += 1;
+          continue;
+        }
+
+        if (current === '*' && next === '/') {
+          state.blockCommentDepth -= 1;
+          sanitized += '  ';
+          i += 1;
+          continue;
+        }
+
+        sanitized += ' ';
         continue;
       }
 
-      if (current === '\\') {
-        escaped = true;
+      if (state.inRawString) {
+        if (current === '"' && next === '"' && next2 === '"') {
+          state.inRawString = false;
+          sanitized += '   ';
+          i += 2;
+          continue;
+        }
+
+        sanitized += ' ';
         continue;
       }
 
-      if (current === '\'' && !inDoubleQuote) {
-        inSingleQuote = !inSingleQuote;
+      if (state.inDoubleQuote) {
+        if (state.escaped) {
+          state.escaped = false;
+          sanitized += ' ';
+          continue;
+        }
+
+        if (current === '\\') {
+          state.escaped = true;
+          sanitized += ' ';
+          continue;
+        }
+
+        if (current === '"') {
+          state.inDoubleQuote = false;
+          sanitized += ' ';
+          continue;
+        }
+
+        sanitized += ' ';
         continue;
       }
 
-      if (current === '"' && !inSingleQuote) {
-        inDoubleQuote = !inDoubleQuote;
+      if (state.inSingleQuote) {
+        if (state.escaped) {
+          state.escaped = false;
+          sanitized += ' ';
+          continue;
+        }
+
+        if (current === '\\') {
+          state.escaped = true;
+          sanitized += ' ';
+          continue;
+        }
+
+        if (current === '\'') {
+          state.inSingleQuote = false;
+          sanitized += ' ';
+          continue;
+        }
+
+        sanitized += ' ';
         continue;
       }
 
-      if (!inSingleQuote && !inDoubleQuote && current === '/' && next === '/') {
-        return line.slice(0, i);
+      if (current === '/' && next === '/') {
+        break;
       }
+
+      if (current === '/' && next === '*') {
+        state.blockCommentDepth += 1;
+        sanitized += '  ';
+        i += 1;
+        continue;
+      }
+
+      if (current === '"' && next === '"' && next2 === '"') {
+        state.inRawString = true;
+        sanitized += '   ';
+        i += 2;
+        continue;
+      }
+
+      if (current === '"') {
+        state.inDoubleQuote = true;
+        sanitized += ' ';
+        continue;
+      }
+
+      if (current === '\'') {
+        state.inSingleQuote = true;
+        sanitized += ' ';
+        continue;
+      }
+
+      sanitized += current;
     }
 
-    return line;
+    return sanitized;
   }
 
   private setIndexIfAbsent(index: Map<string, string>, key: string, value: string): void {

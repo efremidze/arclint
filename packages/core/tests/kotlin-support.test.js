@@ -97,6 +97,107 @@ describe('Kotlin support', () => {
     ).toBe(true);
   });
 
+  test('kotlin analyzer excludes private/protected declarations from exports', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-kotlin-exports-'));
+    const rootDir = path.join(tempDir, 'src', 'main', 'kotlin');
+    const domainDir = path.join(rootDir, 'com', 'example', 'app', 'domain');
+
+    fs.mkdirSync(domainDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(domainDir, 'Declarations.kt'),
+      [
+        'package com.example.app.domain',
+        '',
+        'private class HiddenClass',
+        'protected fun hiddenFn() = Unit',
+        'internal class InternalClass',
+        'class PublicClass',
+        'fun publicFn() = Unit'
+      ].join('\n'),
+      'utf8'
+    );
+
+    const analyzer = new KotlinImportGraphAnalyzer();
+    const modules = await analyzer.analyzeDirectory(rootDir, rootDir);
+    const module = modules.find((m) => m.path === 'com/example/app/domain/Declarations.kt');
+
+    expect(module).toBeDefined();
+    expect(module.exports).toEqual(expect.arrayContaining(['InternalClass', 'PublicClass', 'publicFn']));
+    expect(module.exports).not.toEqual(expect.arrayContaining(['HiddenClass', 'hiddenFn']));
+  });
+
+  test('kotlin analyzer ignores imports/declarations inside block comments', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-kotlin-comments-'));
+    const rootDir = path.join(tempDir, 'src', 'main', 'kotlin');
+    const appDir = path.join(rootDir, 'com', 'example', 'app');
+    const dataDir = path.join(appDir, 'data');
+
+    fs.mkdirSync(dataDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(dataDir, 'UserRepository.kt'),
+      ['package com.example.app.data', '', 'class UserRepository'].join('\n'),
+      'utf8'
+    );
+
+    fs.writeFileSync(
+      path.join(appDir, 'Commented.kt'),
+      [
+        'package com.example.app',
+        '',
+        '/**',
+        ' * import com.example.app.data.UserRepository',
+        ' * private class FakeInsideComment',
+        ' * fun fakeFn() {}',
+        ' */',
+        'class RealType'
+      ].join('\n'),
+      'utf8'
+    );
+
+    const analyzer = new KotlinImportGraphAnalyzer();
+    const modules = await analyzer.analyzeDirectory(rootDir, rootDir);
+    const module = modules.find((m) => m.path === 'com/example/app/Commented.kt');
+
+    expect(module).toBeDefined();
+    expect(module.dependencies).toHaveLength(0);
+    expect(module.exports).toEqual(['RealType']);
+  });
+
+  test('kotlin analyzer ignores braces and declarations inside triple-quoted strings', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-kotlin-rawstr-'));
+    const rootDir = path.join(tempDir, 'src', 'main', 'kotlin');
+    const appDir = path.join(rootDir, 'com', 'example', 'app');
+
+    fs.mkdirSync(appDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(appDir, 'RawStrings.kt'),
+      [
+        'package com.example.app',
+        '',
+        'class Container {',
+        '  val payload = """',
+        '    {',
+        '      "commentLike": "/* ignored */",',
+        '      "quoteLike": "\\"\\"\\" still raw string",',
+        '      "decl": "class NotAType {}"',
+        '    }',
+        '  """',
+        '}',
+        '',
+        'fun topLevelFn() = Unit'
+      ].join('\n'),
+      'utf8'
+    );
+
+    const analyzer = new KotlinImportGraphAnalyzer();
+    const modules = await analyzer.analyzeDirectory(rootDir, rootDir);
+    const module = modules.find((m) => m.path === 'com/example/app/RawStrings.kt');
+
+    expect(module).toBeDefined();
+    expect(module.exports).toEqual(expect.arrayContaining(['Container', 'topLevelFn']));
+    expect(module.exports).not.toEqual(expect.arrayContaining(['NotAType']));
+  });
+
   test('onboarding detects kotlin and selects android app root dir', async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-kotlin-detect-'));
     const appKotlinDir = path.join(tempDir, 'app', 'src', 'main', 'kotlin', 'com', 'example', 'app');
