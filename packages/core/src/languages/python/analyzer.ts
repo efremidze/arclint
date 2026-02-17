@@ -57,7 +57,7 @@ export class PythonImportGraphAnalyzer {
     const lines = content.split('\n');
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+      const line = this.stripInlineComment(lines[i]).trim();
       if (!line || line.startsWith('#')) {
         continue;
       }
@@ -161,7 +161,7 @@ export class PythonImportGraphAnalyzer {
     lines: string[],
     startLineIndex: number
   ): { statement: string; consumedLines: number; lineNumber: number } {
-    const firstLine = lines[startLineIndex].trim();
+    const firstLine = this.stripInlineComment(lines[startLineIndex]).trim();
     if (!/^from\s+[.\w]+\s+import\b/.test(firstLine)) {
       return {
         statement: firstLine,
@@ -184,7 +184,7 @@ export class PythonImportGraphAnalyzer {
     let parenDepth = this.countChar(firstLine, '(') - this.countChar(firstLine, ')');
 
     while (parenDepth > 0 && startLineIndex + consumedLines < lines.length) {
-      const nextLine = lines[startLineIndex + consumedLines].trim();
+      const nextLine = this.stripInlineComment(lines[startLineIndex + consumedLines]).trim();
       collected.push(nextLine);
       consumedLines++;
       parenDepth += this.countChar(nextLine, '(') - this.countChar(nextLine, ')');
@@ -213,6 +213,42 @@ export class PythonImportGraphAnalyzer {
 
   private countChar(value: string, char: string): number {
     return value.split(char).length - 1;
+  }
+
+  private stripInlineComment(line: string): string {
+    let inSingle = false;
+    let inDouble = false;
+    let escaped = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+
+      if (ch === '\\') {
+        escaped = true;
+        continue;
+      }
+
+      if (ch === '\'' && !inDouble) {
+        inSingle = !inSingle;
+        continue;
+      }
+
+      if (ch === '"' && !inSingle) {
+        inDouble = !inDouble;
+        continue;
+      }
+
+      if (ch === '#' && !inSingle && !inDouble) {
+        return line.slice(0, i);
+      }
+    }
+
+    return line;
   }
 
   private resolveDependency(
@@ -279,8 +315,8 @@ export class PythonImportGraphAnalyzer {
   private extractExports(content: string): string[] {
     const exports: string[] = [];
     const patterns = [
-      /^\s*def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/gm,
-      /^\s*class\s+([A-Za-z_][A-Za-z0-9_]*)\s*(\(|:)/gm
+      /^def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/gm,
+      /^class\s+([A-Za-z_][A-Za-z0-9_]*)\s*(\(|:)/gm
     ];
 
     for (const pattern of patterns) {
