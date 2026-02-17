@@ -91,7 +91,11 @@ export class PythonImportGraphAnalyzer {
       const moduleSpec = fromImportMatch[1];
       const importedNames = this.parseImportedNames(fromImportMatch[2]);
 
-      const resolvedBase = this.resolveModuleSpec(moduleSpec, fromModule);
+      const resolvedBase = this.resolveModuleSpec(
+        moduleSpec,
+        fromModule,
+        fromPath.endsWith('/__init__.py')
+      );
       if (!resolvedBase) {
         dependencies.push({
           from: fromPath,
@@ -244,7 +248,11 @@ export class PythonImportGraphAnalyzer {
     };
   }
 
-  private resolveModuleSpec(moduleSpec: string, fromModule: string): string | null {
+  private resolveModuleSpec(
+    moduleSpec: string,
+    fromModule: string,
+    isFromPackageInit: boolean
+  ): string | null {
     if (!moduleSpec.startsWith('.')) {
       return moduleSpec;
     }
@@ -253,9 +261,8 @@ export class PythonImportGraphAnalyzer {
     const suffix = moduleSpec.slice(dots);
 
     const moduleParts = fromModule.split('.').filter(Boolean);
-    const packageParts = fromModule.endsWith('.__init__')
-      ? moduleParts.slice(0, -1)
-      : moduleParts.slice(0, -1);
+    // In __init__.py, "from .x import y" is relative to the current package.
+    const packageParts = isFromPackageInit ? moduleParts : moduleParts.slice(0, -1);
 
     const parentLevels = Math.max(0, dots - 1);
     if (parentLevels > packageParts.length) {

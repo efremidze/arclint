@@ -167,7 +167,11 @@ export class OnboardingService {
       return Language.SWIFT;
     }
 
-    if (fs.existsSync(pyprojectPath) || fs.existsSync(requirementsPath)) {
+    if (fs.existsSync(pyprojectPath)) {
+      return Language.PYTHON;
+    }
+
+    if (fs.existsSync(requirementsPath) && (await this.hasPythonFiles(rootDir, 3))) {
       return Language.PYTHON;
     }
 

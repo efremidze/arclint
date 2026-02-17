@@ -150,6 +150,34 @@ describe('Python support', () => {
     expect(unresolved.severity).toBe(ViolationSeverity.INFO);
   });
 
+  test('relative imports inside __init__.py resolve against current package', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-python-init-'));
+    const srcDir = path.join(tempDir, 'src');
+    const viewsDir = path.join(srcDir, 'shop', 'views');
+
+    fs.mkdirSync(viewsDir, { recursive: true });
+    fs.writeFileSync(path.join(srcDir, 'shop', '__init__.py'), '', 'utf8');
+    fs.writeFileSync(path.join(viewsDir, 'helpers.py'), 'def format_price(value):\n    return f\"{value}\"\n', 'utf8');
+    fs.writeFileSync(
+      path.join(viewsDir, '__init__.py'),
+      [
+        'from .helpers import format_price',
+        '',
+        '__all__ = [\"format_price\"]'
+      ].join('\n'),
+      'utf8'
+    );
+
+    const analyzer = new PythonImportGraphAnalyzer();
+    const modules = await analyzer.analyzeDirectory(srcDir, srcDir);
+    const initModule = modules.find((m) => m.path === 'shop/views/__init__.py');
+
+    expect(initModule).toBeDefined();
+    expect(initModule.dependencies.some((d) => d.to === 'shop/views/helpers.py' && !d.isExternal)).toBe(
+      true
+    );
+  });
+
   test('onboarding detects python projects from pyproject.toml', async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-python-detect-'));
     fs.writeFileSync(path.join(tempDir, 'pyproject.toml'), '[project]\\nname = \"demo\"\\n', 'utf8');
@@ -160,5 +188,16 @@ describe('Python support', () => {
     const language = await onboarding.detectLanguage(tempDir);
 
     expect(language).toBe(Language.PYTHON);
+  });
+
+  test('onboarding does not classify requirements.txt-only repos as python', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arclint-python-requirements-only-'));
+    fs.writeFileSync(path.join(tempDir, 'requirements.txt'), 'requests==2.32.3\\n', 'utf8');
+    fs.writeFileSync(path.join(tempDir, 'README.md'), '# demo\\n', 'utf8');
+
+    const onboarding = new OnboardingService();
+    const language = await onboarding.detectLanguage(tempDir);
+
+    expect(language).toBe(Language.JAVASCRIPT);
   });
 });
