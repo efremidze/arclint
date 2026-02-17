@@ -11,6 +11,7 @@ import { RuleEngine } from './rules';
 import { OnboardingService } from './onboarding';
 import { AnalysisResult, Language, Module } from './types';
 import { SwiftImportGraphAnalyzer } from './languages/swift';
+import { PythonImportGraphAnalyzer } from './languages/python';
 
 interface LanguageAnalyzer {
   analyzeDirectory(dirPath: string, rootDir: string, patterns?: string[]): Promise<Module[]>;
@@ -76,6 +77,8 @@ export class ArcLint {
     switch (language) {
       case Language.SWIFT:
         return new SwiftImportGraphAnalyzer();
+      case Language.PYTHON:
+        return new PythonImportGraphAnalyzer();
       case Language.TYPESCRIPT:
       case Language.JAVASCRIPT:
       default:

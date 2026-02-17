@@ -13,7 +13,7 @@ ArcLint is an intelligent linting tool that helps maintain architectural consist
 - ⚡ **Fast & Deterministic**: Local import graph analysis with no API calls during linting
 - 🚫 **Violation Detection**: Flags dependency direction violations, pattern inconsistencies, and misplaced business logic
 - 🔄 **Real-time Feedback**: Integrates seamlessly with VS Code for instant feedback
-- 🎯 **Zero Config**: Works out of the box after one-time onboarding
+- 🎯 **Quick Setup**: Works after a short onboarding flow that generates `.arclint.yml`
 
 ### Supported Architectures
 
@@ -134,7 +134,7 @@ Configure ArcLint in VS Code settings:
 ```yaml
 version: string          # Config version (e.g., "0.1.0")
 pattern: string          # Architecture pattern: clean, mvc, mvvm, mvp, modular
-language: string         # Language: typescript, javascript, swift
+language: string         # Language: typescript, javascript, swift, python
 rootDir: string          # Project root directory (e.g., "./src")
 
 layers:                  # Layer definitions
@@ -189,33 +189,6 @@ export function calculateUserAge(birthDate: Date): number { ... }
 
 ## Development
 
-### Project Structure
-
-```
-arclint/
-├── packages/
-│   ├── core/                 # Core linting engine
-│   │   ├── src/
-│   │   │   ├── types.ts      # Type definitions
-│   │   │   ├── analyzer.ts   # Import graph analyzer
-│   │   │   ├── config.ts     # Configuration parser
-│   │   │   ├── rules.ts      # Rule engine
-│   │   │   ├── onboarding.ts # Architecture inference
-│   │   │   └── index.ts      # Main exports
-│   │   ├── package.json
-│   │   └── tsconfig.json
-│   │
-│   └── vscode-extension/     # VS Code extension
-│       ├── src/
-│       │   └── extension.ts  # Extension entry point
-│       ├── package.json
-│       └── tsconfig.json
-│
-├── package.json              # Monorepo root
-├── LICENSE
-└── README.md
-```
-
 ### Building from Source
 
 ```bash
@@ -237,29 +210,25 @@ npm run watch
 ### Testing
 
 ```bash
-# Run tests (when implemented)
-npm test
+# Run tests
+npm run test
 ```
 
 ## Roadmap
 
-TypeScript-first execution plan: see [`docs/typescript-milestones.md`](docs/typescript-milestones.md).
-
-### v0.1 (Current)
+### v0.1 (Shipped)
 - ✅ Core import graph analyzer
 - ✅ Architecture pattern inference
 - ✅ Rule engine with violation detection
 - ✅ VS Code extension with real-time linting (first IDE target)
 - ✅ Support for Clean, MVC, MVVM, MVP, Modular patterns
-- ✅ TypeScript support
 
-### v0.2 (Swift Support)
-- [ ] Swift parser and analyzer
-- [ ] Swift project structure inference
-- [ ] Swift-specific architectural patterns
-- [ ] Xcode integration
+### v0.2 (Shipped)
+- ✅ Swift support
+- ✅ Python support
+- ✅ Language-specific folder structure in `packages/core/src/languages/*`
 
-### v0.3 (Enhanced LLM Integration)
+### v0.3 (Next - Enhanced LLM Integration)
 - [ ] OpenAI/Anthropic API integration for onboarding
 - [ ] Context-aware suggestions
 - [ ] Auto-fix capabilities
@@ -267,28 +236,11 @@ TypeScript-first execution plan: see [`docs/typescript-milestones.md`](docs/type
 
 ### Language Support Roadmap
 - [x] TypeScript
-- [ ] Swift
+- [x] Swift
 - [ ] Kotlin
-- [ ] Python
-- [ ] GoLang
+- [x] Python
+- [ ] Go
 - [ ] Rust
-
-### IDE Support Roadmap
-- [x] VS Code
-- [ ] JetBrains IDEs (IntelliJ, WebStorm, PyCharm)
-- [ ] Neovim (LSP)
-- [ ] Zed
-- [ ] Sublime Text
-
-### Future
-- [ ] Custom rule definitions
-- [ ] Team configuration sharing
-- [ ] CI/CD integration
-- [ ] Architectural debt metrics
-
-## Examples
-
-See the `/examples` directory (coming soon) for sample projects demonstrating each architectural pattern.
 
 ## Contributing
 
@@ -297,13 +249,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
-## Author
-
-Lasha Efremidze
-
-## Support
-
-- 🐛 [Report Issues](https://github.com/efremidze/arclint/issues)
-- 💬 [Discussions](https://github.com/efremidze/arclint/discussions)
-- 📧 Email: [Contact](mailto:lasha.efremidze@gmail.com)
