@@ -1,5 +1,8 @@
 # ArcLint
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/efremidze/arclint)
+
 AI-assisted architecture linting for modern codebases.
 
 ## Overview
@@ -25,14 +28,20 @@ ArcLint is an intelligent linting tool that helps maintain architectural consist
 
 ## Installation
 
-### VS Code Extension
+### Option 1: VS Code Extension (Recommended)
 
 1. Open VS Code
 2. Go to Extensions (Ctrl+Shift+X / Cmd+Shift+X)
 3. Search for "ArcLint"
 4. Click Install
 
-### Manual Installation
+### Option 2: CLI Tool
+
+```bash
+npm install -g @arclint/core
+```
+
+### Option 3: Manual Installation (Development)
 
 ```bash
 # Clone the repository
@@ -55,11 +64,18 @@ code --install-extension arclint-*.vsix
 
 ### 1. Run Onboarding
 
-Open your project and run:
+#### In VS Code:
 
 ```
 Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
 > ArcLint: Run Onboarding
+```
+
+#### Using CLI:
+
+```bash
+cd your-project
+arclint onboard
 ```
 
 This will:
@@ -107,13 +123,20 @@ ignore:
   - '**/node_modules/**'
 ```
 
-### 3. Start Coding
+### 3. Start Linting
 
+#### In VS Code:
 ArcLint will automatically lint your code:
 - On file save (configurable)
 - Via command: `ArcLint: Lint Project`
+- Violations appear inline with helpful suggestions
 
-Violations appear inline with helpful suggestions.
+#### Using CLI:
+```bash
+arclint lint
+```
+
+See [Quick Start Guide](QUICKSTART.md) for detailed instructions.
 
 ## Configuration
 
@@ -187,7 +210,47 @@ export function calculateUserAge(birthDate: Date): number {
 export function calculateUserAge(birthDate: Date): number { ... }
 ```
 
+## CLI Usage
+
+### Commands
+
+```bash
+# Run onboarding to generate .arclint.yml
+arclint onboard
+
+# Lint your project
+arclint lint
+
+# Show version
+arclint version
+
+# Show help
+arclint help
+```
+
+### Options
+
+```bash
+# Specify custom config path
+arclint lint --config ./custom/.arclint.yml
+
+# Lint specific directory
+arclint lint --rootDir ./src
+```
+
+## Examples
+
+Check out the [examples directory](examples/) for:
+- Detailed architecture pattern explanations
+- Example project structures
+- Common violations and how to fix them
+- Language-specific scorecards and best practices
+
+See also: [Clean Architecture Example](examples/clean-architecture.md)
+
 ## Development
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development instructions.
 
 ### Building from Source
 
@@ -212,40 +275,97 @@ npm run watch
 ```bash
 # Run tests
 npm run test
+
+# Test specific package
+npm run test --workspace @arclint/core
 ```
+
+## Language Support
+
+| Language | Status | Version | Notes |
+|----------|--------|---------|-------|
+| TypeScript | ✅ Stable | v0.1.0+ | Full support with import graph analysis |
+| JavaScript | ✅ Stable | v0.1.0+ | Via TypeScript parser |
+| Swift | ✅ Stable | v0.2.0+ | Import and framework detection |
+| Kotlin | ✅ Stable | v0.2.0+ | Package and import analysis |
+| Python | ✅ Stable | v0.2.0+ | Module and import detection |
+| Go | 🔜 Planned | - | Roadmap for future release |
+| Rust | 🔜 Planned | - | Roadmap for future release |
 
 ## Roadmap
 
-### v0.1 (Shipped)
+### v0.1 ✅ Shipped
 - ✅ Core import graph analyzer
 - ✅ Architecture pattern inference
 - ✅ Rule engine with violation detection
-- ✅ VS Code extension with real-time linting (first IDE target)
+- ✅ VS Code extension with real-time linting
 - ✅ Support for Clean, MVC, MVVM, MVP, Modular patterns
+- ✅ TypeScript and JavaScript support
 
-### v0.2 (Shipped)
+### v0.2 ✅ Shipped
 - ✅ Swift support
+- ✅ Kotlin support
 - ✅ Python support
 - ✅ Language-specific folder structure in `packages/core/src/languages/*`
+- ✅ CLI tool enhancements
 
-### v0.3 (Next - Enhanced LLM Integration)
+### v0.3 🔜 In Progress (Enhanced LLM Integration)
 - [ ] OpenAI/Anthropic API integration for onboarding
 - [ ] Context-aware suggestions
 - [ ] Auto-fix capabilities
 - [ ] Learning from codebase-specific patterns
+- [ ] Go language support
+- [ ] Rust language support
 
-### Language Support Roadmap
-- [x] TypeScript
-- [x] Swift
-- [x] Kotlin
-- [x] Python
-- [ ] Go
-- [ ] Rust
+## Troubleshooting
+
+### Common Issues
+
+**"No .arclint.yml found"**
+- Run onboarding first: `arclint onboard` or use VS Code command `ArcLint: Run Onboarding`
+
+**Pattern not detected correctly**
+- Manually edit `.arclint.yml` and set the correct pattern: `pattern: mvc` (or mvvm, mvp, modular, clean)
+
+**False positives**
+- Add exceptions to the ignore list in `.arclint.yml`:
+  ```yaml
+  ignore:
+    - '**/legacy/**'
+    - '**/generated/**'
+  ```
+
+**Extension not working in VS Code**
+- Ensure `.arclint.yml` exists in your project root
+- Check VS Code settings: `arclint.enable` should be `true`
+- Reload VS Code window after configuration changes
+
+## Resources
+
+- 📖 [Quick Start Guide](QUICKSTART.md) - Get started in 5 minutes
+- 🤝 [Contributing Guide](CONTRIBUTING.md) - Help improve ArcLint
+- 📝 [Examples](examples/) - Real-world architecture patterns
+- 🔒 [Security Policy](SECURITY.md) - Report security issues
+- 📋 [Changelog](CHANGELOG.md) - Version history
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details on:
+- Setting up the development environment
+- Code style and conventions
+- Submitting pull requests
+- Adding new features or language support
+
+## Support
+
+- 🐛 [Report a bug](https://github.com/efremidze/arclint/issues)
+- 💬 [Ask a question](https://github.com/efremidze/arclint/discussions)
+- ⭐ Star this repo if you find it useful!
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+Made with ❤️ by [Lasha Efremidze](https://github.com/efremidze)
