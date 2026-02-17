@@ -7,9 +7,10 @@ Scope: ArcLint TypeScript/JavaScript support in `packages/core` (onboarding, ana
 
 TypeScript/JavaScript support is the most mature deterministic path in core, with AST-based import parsing and stable generic architecture rules, but it still needs broader fixtures and DX polish for production confidence.
 
-- Current overall score: **3.8 / 5.0**
-- Target for "production-ready TypeScript": **4.5 / 5.0**
+- Current overall score: **3.6 / 5.0**
+- Target for "production-ready TypeScript": **4.4 / 5.0**
 - Recommendation: continue deterministic-first hardening (resolver fidelity, broader fixtures, perf budgets) before adding AI as anything beyond optional guidance.
+- Scoring rubric: `docs/scorecard-rubric.md`
 
 ## Current vs Target Scorecard
 
@@ -23,6 +24,20 @@ TypeScript/JavaScript support is the most mature deterministic path in core, wit
 | IDE feedback quality | 3.5 | 4.5 | Core diagnostics work, but remediation text can be more context-aware by framework/project style. |
 | Performance confidence | 3.0 | 4.0 | No explicit benchmark suite or CI budgets for large TS monorepos. |
 | Documentation clarity | 3.5 | 4.0 | Usable docs exist, but fewer deep examples for real-world TS layouts and edge cases. |
+
+## Weighted Score Calculation
+
+| Area | Score | Weight | Weighted contribution |
+|---|---:|---:|---:|
+| Language detection | 4.5 | 10% | 0.45 |
+| Import graph fidelity | 4.0 | 20% | 0.80 |
+| Rule coverage | 3.5 | 20% | 0.70 |
+| Config defaults | 4.0 | 10% | 0.40 |
+| Test coverage | 3.0 | 15% | 0.45 |
+| IDE feedback quality | 3.5 | 10% | 0.35 |
+| Performance confidence | 3.0 | 10% | 0.30 |
+| Documentation clarity | 3.5 | 5% | 0.18 |
+| **Total** |  |  | **3.63 / 5.0** |
 
 ## What We Have (Evidence)
 

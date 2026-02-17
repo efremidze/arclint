@@ -7,9 +7,10 @@ Scope: ArcLint Python support in `packages/core` (onboarding, analyzer, rules, t
 
 Python support is in a strong MVP state for deterministic architecture enforcement.
 
-- Current overall score: **3.6 / 5.0**
-- Target for "production-ready Python": **4.5 / 5.0**
+- Current overall score: **3.4 / 5.0**
+- Target for "production-ready Python": **4.4 / 5.0**
 - Recommendation: continue deterministic parser/rule hardening before adding AI-specific Python behavior.
+- Scoring rubric: `docs/scorecard-rubric.md`
 
 ## Current vs Target Scorecard
 
@@ -23,6 +24,20 @@ Python support is in a strong MVP state for deterministic architecture enforceme
 | IDE feedback quality | 3.5 | 4.5 | Diagnostics flow works, but Python-specific messages/suggestions can be richer. |
 | Performance confidence | 2.5 | 4.0 | No Python-specific performance budgets/benchmarks yet. |
 | Documentation clarity | 3.0 | 4.0 | README mentions Python, but dedicated Python behavior docs are still light. |
+
+## Weighted Score Calculation
+
+| Area | Score | Weight | Weighted contribution |
+|---|---:|---:|---:|
+| Language detection | 4.0 | 10% | 0.40 |
+| Import graph fidelity | 3.5 | 20% | 0.70 |
+| Rule coverage | 3.0 | 20% | 0.60 |
+| Config defaults | 3.5 | 10% | 0.35 |
+| Test coverage | 4.0 | 15% | 0.60 |
+| IDE feedback quality | 3.5 | 10% | 0.35 |
+| Performance confidence | 2.5 | 10% | 0.25 |
+| Documentation clarity | 3.0 | 5% | 0.15 |
+| **Total** |  |  | **3.40 / 5.0** |
 
 ## What We Have (Evidence)
 
