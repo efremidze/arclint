@@ -154,6 +154,10 @@ export class OnboardingService {
     const tsConfigPath = path.join(rootDir, 'tsconfig.json');
     const packageJsonPath = path.join(rootDir, 'package.json');
     const packageSwiftPath = path.join(rootDir, 'Package.swift');
+    const buildGradlePath = path.join(rootDir, 'build.gradle');
+    const buildGradleKtsPath = path.join(rootDir, 'build.gradle.kts');
+    const settingsGradlePath = path.join(rootDir, 'settings.gradle');
+    const settingsGradleKtsPath = path.join(rootDir, 'settings.gradle.kts');
     const pyprojectPath = path.join(rootDir, 'pyproject.toml');
     const requirementsPath = path.join(rootDir, 'requirements.txt');
 
@@ -175,6 +179,16 @@ export class OnboardingService {
       return Language.PYTHON;
     }
 
+    if (
+      (fs.existsSync(buildGradlePath) ||
+        fs.existsSync(buildGradleKtsPath) ||
+        fs.existsSync(settingsGradlePath) ||
+        fs.existsSync(settingsGradleKtsPath)) &&
+      (await this.hasKotlinFiles(rootDir, 8))
+    ) {
+      return Language.KOTLIN;
+    }
+
     // Check package.json for TypeScript dependency
     if (fs.existsSync(packageJsonPath)) {
       const content = await fs.promises.readFile(packageJsonPath, 'utf-8');
@@ -192,6 +206,10 @@ export class OnboardingService {
 
     if (await this.hasPythonFiles(rootDir, 3)) {
       return Language.PYTHON;
+    }
+
+    if (await this.hasKotlinFiles(rootDir, 8)) {
+      return Language.KOTLIN;
     }
 
     // Default to JavaScript
@@ -233,6 +251,19 @@ export class OnboardingService {
     }
 
     if (language === Language.PYTHON) {
+      if (fs.existsSync(path.join(rootDir, 'src'))) {
+        return './src';
+      }
+      return './';
+    }
+
+    if (language === Language.KOTLIN) {
+      if (fs.existsSync(path.join(rootDir, 'app', 'src', 'main', 'kotlin'))) {
+        return './app/src/main/kotlin';
+      }
+      if (fs.existsSync(path.join(rootDir, 'src', 'main', 'kotlin'))) {
+        return './src/main/kotlin';
+      }
       if (fs.existsSync(path.join(rootDir, 'src'))) {
         return './src';
       }
@@ -293,6 +324,42 @@ export class OnboardingService {
 
         const fullPath = path.join(current, entry.name);
         if (entry.isFile() && entry.name.endsWith('.py')) {
+          return true;
+        }
+        if (entry.isDirectory()) {
+          const found = await walk(fullPath, depth + 1);
+          if (found) return true;
+        }
+      }
+
+      return false;
+    }
+
+    try {
+      return await walk(dir, 0);
+    } catch {
+      return false;
+    }
+  }
+
+  private async hasKotlinFiles(dir: string, maxDepth: number): Promise<boolean> {
+    async function walk(current: string, depth: number): Promise<boolean> {
+      if (depth > maxDepth) return false;
+
+      const entries = await fs.promises.readdir(current, { withFileTypes: true });
+      for (const entry of entries) {
+        if (
+          entry.name === '.git' ||
+          entry.name === '.gradle' ||
+          entry.name === '.idea' ||
+          entry.name === 'build' ||
+          entry.name === 'node_modules'
+        ) {
+          continue;
+        }
+
+        const fullPath = path.join(current, entry.name);
+        if (entry.isFile() && entry.name.endsWith('.kt')) {
           return true;
         }
         if (entry.isDirectory()) {

@@ -114,12 +114,20 @@ export class ConfigParser {
   ): ArchitectureConfig {
     const isSwift = language === Language.SWIFT;
     const isPython = language === Language.PYTHON;
+    const isKotlin = language === Language.KOTLIN;
+    const usesLowercaseFolders = isPython || isKotlin;
 
     const config: ArchitectureConfig = {
       version: '0.1.0',
       pattern,
       language,
-      rootDir: rootDir || (language === Language.SWIFT ? './Sources' : './src'),
+      rootDir:
+        rootDir ||
+        (language === Language.SWIFT
+          ? './Sources'
+          : language === Language.KOTLIN
+          ? './src/main/kotlin'
+          : './src'),
       layers: [],
       rules: {
         enforceLayerBoundaries: true,
@@ -129,6 +137,8 @@ export class ConfigParser {
       ignore:
         language === Language.SWIFT
           ? ['**/*Tests.swift', '**/Tests/**', '**/.build/**']
+          : language === Language.KOTLIN
+          ? ['**/build/**', '**/.gradle/**', '**/src/test/**', '**/src/androidTest/**']
           : language === Language.PYTHON
           ? ['**/tests/**', '**/test_*.py', '**/*_test.py', '**/__pycache__/**', '**/.venv/**']
           : ['**/*.test.ts', '**/*.test.tsx', '**/node_modules/**']
@@ -169,13 +179,13 @@ export class ConfigParser {
         config.layers = [
           {
             name: LayerType.MODEL,
-            pattern: isSwift ? '**/Models/**' : isPython ? '**/models/**' : '**/model?(s)/**',
+            pattern: isSwift ? '**/Models/**' : usesLowercaseFolders ? '**/models/**' : '**/model?(s)/**',
             canDependOn: [],
             description: 'Data models'
           },
           {
             name: LayerType.VIEW,
-            pattern: isSwift ? '**/Views/**' : isPython ? '**/views/**' : '**/view?(s)/**',
+            pattern: isSwift ? '**/Views/**' : usesLowercaseFolders ? '**/views/**' : '**/view?(s)/**',
             canDependOn: [],
             description: 'UI views'
           },
@@ -184,7 +194,7 @@ export class ConfigParser {
             pattern:
               isSwift
                 ? '**/Controllers/**'
-                : isPython
+                : usesLowercaseFolders
                 ? '**/controllers/**'
                 : '**/controller?(s)/**',
             canDependOn: [LayerType.MODEL, LayerType.VIEW],
@@ -197,13 +207,13 @@ export class ConfigParser {
         config.layers = [
           {
             name: LayerType.MODEL,
-            pattern: isSwift ? '**/Models/**' : isPython ? '**/models/**' : '**/model?(s)/**',
+            pattern: isSwift ? '**/Models/**' : usesLowercaseFolders ? '**/models/**' : '**/model?(s)/**',
             canDependOn: [],
             description: 'Data models'
           },
           {
             name: LayerType.VIEW,
-            pattern: isSwift ? '**/Views/**' : isPython ? '**/views/**' : '**/view?(s)/**',
+            pattern: isSwift ? '**/Views/**' : usesLowercaseFolders ? '**/views/**' : '**/view?(s)/**',
             canDependOn: [LayerType.VIEWMODEL],
             description: 'UI views'
           },
@@ -212,7 +222,7 @@ export class ConfigParser {
             pattern:
               isSwift
                 ? '**/ViewModels/**'
-                : isPython
+                : usesLowercaseFolders
                 ? '**/viewmodels/**'
                 : '**/viewmodel?(s)/**',
             canDependOn: [LayerType.MODEL],
@@ -225,13 +235,13 @@ export class ConfigParser {
         config.layers = [
           {
             name: LayerType.MODEL,
-            pattern: isSwift ? '**/Models/**' : isPython ? '**/models/**' : '**/model?(s)/**',
+            pattern: isSwift ? '**/Models/**' : usesLowercaseFolders ? '**/models/**' : '**/model?(s)/**',
             canDependOn: [],
             description: 'Data models'
           },
           {
             name: LayerType.VIEW,
-            pattern: isSwift ? '**/Views/**' : isPython ? '**/views/**' : '**/view?(s)/**',
+            pattern: isSwift ? '**/Views/**' : usesLowercaseFolders ? '**/views/**' : '**/view?(s)/**',
             canDependOn: [],
             description: 'UI views'
           },
@@ -240,7 +250,7 @@ export class ConfigParser {
             pattern:
               isSwift
                 ? '**/Presenters/**'
-                : isPython
+                : usesLowercaseFolders
                 ? '**/presenters/**'
                 : '**/presenter?(s)/**',
             canDependOn: [LayerType.MODEL, LayerType.VIEW],

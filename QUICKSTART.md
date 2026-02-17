@@ -48,7 +48,7 @@ npm install -g @arclint/core
 
 ### Step 1: Open Your Project
 
-Open your TypeScript/JavaScript project in VS Code or navigate to it in terminal.
+Open your project in VS Code or navigate to it in terminal.
 
 ### Step 2: Run Onboarding
 

@@ -17,7 +17,8 @@ export enum Language {
   TYPESCRIPT = 'typescript',
   JAVASCRIPT = 'javascript',
   SWIFT = 'swift',
-  PYTHON = 'python'
+  PYTHON = 'python',
+  KOTLIN = 'kotlin'
 }
 
 /**

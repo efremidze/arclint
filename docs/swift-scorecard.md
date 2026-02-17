@@ -7,9 +7,10 @@ Scope: ArcLint Swift support in `packages/core` (onboarding, analyzer, rules, te
 
 Swift support is in an early deterministic MVP state with correct language detection and baseline module import graphing, but limited Swift-specific rule intelligence.
 
-- Current overall score: **2.7 / 5.0**
-- Target for "production-ready Swift": **4.5 / 5.0**
+- Current overall score: **2.6 / 5.0**
+- Target for "production-ready Swift": **4.4 / 5.0**
 - Recommendation: keep enforcement deterministic, then add Swift-specific architecture rules before any AI-driven validation.
+- Scoring rubric: `docs/scorecard-rubric.md`
 
 ## Current vs Target Scorecard
 
@@ -23,6 +24,20 @@ Swift support is in an early deterministic MVP state with correct language detec
 | IDE feedback quality | 3.0 | 4.5 | Core diagnostics are usable, but messages are not Swift-contextualized for common architecture mistakes. |
 | Performance confidence | 2.5 | 4.0 | No Swift-specific performance fixture or CI budget yet. |
 | Documentation clarity | 2.5 | 4.0 | Swift support exists but lacks deep guidance and architecture examples in docs. |
+
+## Weighted Score Calculation
+
+| Area | Score | Weight | Weighted contribution |
+|---|---:|---:|---:|
+| Language detection | 4.0 | 10% | 0.40 |
+| Import graph fidelity | 2.5 | 20% | 0.50 |
+| Rule coverage | 2.0 | 20% | 0.40 |
+| Config defaults | 3.5 | 10% | 0.35 |
+| Test coverage | 2.0 | 15% | 0.30 |
+| IDE feedback quality | 3.0 | 10% | 0.30 |
+| Performance confidence | 2.5 | 10% | 0.25 |
+| Documentation clarity | 2.5 | 5% | 0.13 |
+| **Total** |  |  | **2.63 / 5.0** |
 
 ## What We Have (Evidence)
 

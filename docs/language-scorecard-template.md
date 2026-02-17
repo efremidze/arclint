@@ -8,8 +8,9 @@ Scope: ArcLint <language> support in `packages/core` (onboarding, analyzer, rule
 <One paragraph summary of current maturity and recommendation.>
 
 - Current overall score: **X.X / 5.0**
-- Target for "production-ready <language>": **4.5 / 5.0**
+- Target for "production-ready <language>": **4.4 / 5.0**
 - Recommendation: <deterministic-first / hybrid / etc.>
+- Scoring rubric: `docs/scorecard-rubric.md`
 
 ## Current vs Target Scorecard
 
@@ -23,6 +24,20 @@ Scope: ArcLint <language> support in `packages/core` (onboarding, analyzer, rule
 | IDE feedback quality | X.X | 4.5 | <diagnostic clarity and fix guidance> |
 | Performance confidence | X.X | 4.0 | <benchmarks and CI budgets> |
 | Documentation clarity | X.X | 4.0 | <guides, examples, troubleshooting> |
+
+## Weighted Score Calculation
+
+| Area | Score | Weight | Weighted contribution |
+|---|---:|---:|---:|
+| Language detection | X.X | 10% | X.XX |
+| Import graph fidelity | X.X | 20% | X.XX |
+| Rule coverage | X.X | 20% | X.XX |
+| Config defaults | X.X | 10% | X.XX |
+| Test coverage | X.X | 15% | X.XX |
+| IDE feedback quality | X.X | 10% | X.XX |
+| Performance confidence | X.X | 10% | X.XX |
+| Documentation clarity | X.X | 5% | X.XX |
+| **Total** |  |  | **X.XX / 5.0** |
 
 ## What We Have (Evidence)
 
