@@ -1,6 +1,5 @@
 # ArcLint
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/efremidze/arclint)
 
 AI-assisted architecture linting for modern codebases.
