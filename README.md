@@ -364,7 +364,3 @@ We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) 
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
-Made with ❤️ by [Lasha Efremidze](https://github.com/efremidze)
