@@ -1,6 +1,7 @@
 # ArcLint
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/efremidze/arclint)
+[![CI](https://github.com/efremidze/arclint/actions/workflows/ci.yml/badge.svg)](https://github.com/efremidze/arclint/actions/workflows/ci.yml)
 
 AI-assisted architecture linting for modern codebases.
 
